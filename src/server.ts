@@ -15,6 +15,9 @@ import chatHandler from './handlers/chat'
 const app = express()
 const server = createServer(app)
 
+// Trust proxy for X-Forwarded-For headers (required for Traefik/reverse proxy)
+app.set('trust proxy', true)
+
 // Middleware
 app.use(helmet())
 app.use(cors({
