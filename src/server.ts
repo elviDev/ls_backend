@@ -100,7 +100,9 @@ io.on("connection", (socket) => {
   });
 
   socket.on("chat-message", (data) => {
-    socket.to(`broadcast-${data.broadcastId}`).emit("chat-message", data);
+    // Broadcast to all clients in the room, including sender
+    io.to(`broadcast-${data.broadcastId}`).emit("chat-message", data);
+    console.log(`Chat message in broadcast ${data.broadcastId}:`, data.message);
   });
 
   socket.on("disconnect", () => {
