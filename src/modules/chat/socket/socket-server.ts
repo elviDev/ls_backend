@@ -9,7 +9,11 @@ import { ChatService } from "../services/chat.service";
 export function createSocketServer(httpServer: HttpServer): Server {
   const socketOptions: Partial<ServerOptions> = {
     cors: {
-      origin: [config.frontendUrl, "http://localhost:3000"],
+      origin: [
+        config.frontendUrl, 
+        "http://localhost:3000",
+        "https://lsfrontend-production.up.railway.app"
+      ],
       methods: ["GET", "POST"],
       credentials: true,
     },

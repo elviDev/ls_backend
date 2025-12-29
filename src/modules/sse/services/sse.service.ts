@@ -17,7 +17,16 @@ export class SSEService {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
-    res.setHeader('Access-Control-Allow-Origin', process.env.FRONTEND_URL || 'http://localhost:3000');
+    
+    const allowedOrigins = [
+      process.env.FRONTEND_URL || 'https://lsfrontend-production.up.railway.app',
+      'http://localhost:3000',
+      'https://lsfrontend-production.up.railway.app'
+    ];
+    const origin = res.req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    }
     res.setHeader('Access-Control-Allow-Credentials', 'true');
 
     res.write('data: {"type":"connected","message":"SSE connection established"}\n\n');
