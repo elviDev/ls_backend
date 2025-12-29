@@ -1,0 +1,1 @@
+{"version":3,"file":"s3.service.d.ts","sourceRoot":"","sources":["../../src/services/s3.service.ts"],"names":[],"mappings":"AAKA,cAAM,SAAS;IACb,OAAO,CAAC,QAAQ,CAAW;IAC3B,OAAO,CAAC,MAAM,CAAS;IACvB,OAAO,CAAC,eAAe,CAAS;;IAqB1B,UAAU,CAAC,IAAI,EAAE,OAAO,CAAC,MAAM,CAAC,IAAI,EAAE,MAAM,GAAE,MAAkB,GAAG,OAAO,CAAC,MAAM,CAAC;CAiCzF;AAED,eAAO,MAAM,SAAS,WAAkB,CAAC"}

@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BroadcastSSEManager = void 0;
+const logger_1 = require("../../utils/logger");
 /**
  * Manages Server-Sent Events (SSE) connections for broadcast notifications.
  * Allows real-time broadcasting of events to all connected clients.
@@ -28,13 +29,12 @@ class BroadcastSSEManager {
         // Send initial connection message
         res.write('data: {"type":"connected","message":"SSE connection established"}\n\n');
         this.clients.set(clientId, { res, id: clientId });
-        console.log(`📡 [SSE] Client connected: ${clientId}, Total: ${this.clients.size}`);
-        // Handle client disconnect
-        res.on('close', () => {
+        logger_1.logger.info("SSE client connected", { clientId, totalClients: this.clients.size });
+        res.on("close", () => {
             this.removeClient(clientId);
         });
-        res.on('error', (error) => {
-            console.error(`❌ [SSE] Error on client ${clientId}:`, error);
+        res.on("error", (error) => {
+            logger_1.logger.error("SSE client error", { clientId, error });
             this.removeClient(clientId);
         });
     }
@@ -44,7 +44,7 @@ class BroadcastSSEManager {
     removeClient(clientId) {
         if (this.clients.has(clientId)) {
             this.clients.delete(clientId);
-            console.log(`📴 [SSE] Client disconnected: ${clientId}, Remaining: ${this.clients.size}`);
+            logger_1.logger.info("SSE client disconnected", { clientId, remainingClients: this.clients.size });
         }
     }
     /**
@@ -56,7 +56,7 @@ class BroadcastSSEManager {
             data,
             timestamp: new Date().toISOString(),
         });
-        console.log(`📢 [SSE] Broadcasting to ${this.clients.size} clients:`, { eventType, clientCount: this.clients.size });
+        logger_1.logger.info("Broadcasting SSE event", { eventType, clientCount: this.clients.size });
         let successCount = 0;
         const failedClients = [];
         this.clients.forEach((client, clientId) => {
@@ -65,13 +65,16 @@ class BroadcastSSEManager {
                 successCount++;
             }
             catch (error) {
-                console.error(`❌ [SSE] Failed to send to client ${clientId}:`, error);
+                logger_1.logger.error("Failed to send SSE to client", { clientId, error });
                 failedClients.push(clientId);
             }
         });
-        // Clean up failed clients
         failedClients.forEach((clientId) => this.removeClient(clientId));
-        console.log(`✅ [SSE] Event sent successfully to ${successCount}/${this.clients.size} clients`);
+        logger_1.logger.info("SSE broadcast completed", {
+            eventType,
+            successCount,
+            totalClients: this.clients.size
+        });
     }
     /**
      * Send broadcast started event

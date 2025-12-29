@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Response } from "express";
 /**
  * Manages Server-Sent Events (SSE) connections for broadcast notifications.
  * Allows real-time broadcasting of events to all connected clients.

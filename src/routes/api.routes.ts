@@ -1,0 +1,40 @@
+import { Router } from "express";
+import authRoutes from "../modules/auth/routes/auth.routes";
+import podcastRoutes from "../modules/podcasts/routes/podcast.routes";
+import audiobookRoutes from "../modules/audiobooks/routes/audiobook.routes";
+import broadcastRoutes from "../modules/broadcasts/routes/broadcast.routes";
+import userRoutes from "../modules/users/routes/user.routes";
+import commentRoutes from "../modules/comments/routes/comment.routes";
+import reviewRoutes from "../modules/reviews/routes/review.routes";
+import archiveRoutes from "../modules/archives/routes/archive.routes";
+import genreRoutes from "../modules/genres/routes/genre.routes";
+import staffRoutes from "../modules/staff/routes/staff.routes";
+import eventRoutes from "../modules/events/routes/event.routes";
+import programRoutes from "../modules/programs/routes/program.routes";
+import analyticsRoutes from "../modules/analytics/routes/analytics.routes";
+import settingsRoutes from "../modules/settings/routes/settings.routes";
+import chatRoutes from "../modules/chat/routes/chat.routes";
+import sseRoutes from "../modules/sse/routes/sse.routes";
+import livekitRoutes from "../modules/livekit/routes/livekit.routes";
+
+const router = Router();
+
+router.use("/auth", authRoutes);
+router.use("/podcasts", podcastRoutes);
+router.use("/audiobooks", audiobookRoutes);
+router.use("/broadcasts", broadcastRoutes);
+router.use("/users", userRoutes);
+router.use("/comments", commentRoutes);
+router.use("/reviews", reviewRoutes);
+router.use("/archives", archiveRoutes);
+router.use("/genres", genreRoutes);
+router.use("/staff", staffRoutes);
+router.use("/events", eventRoutes);
+router.use("/programs", programRoutes);
+router.use("/analytics", analyticsRoutes);
+router.use("/settings", settingsRoutes);
+router.use("/chat", chatRoutes);
+router.use("/sse", sseRoutes);
+router.use("/livekit", livekitRoutes);
+
+export default router;
