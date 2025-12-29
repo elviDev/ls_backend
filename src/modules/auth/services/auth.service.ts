@@ -166,6 +166,17 @@ export class AuthService {
   async registerStaff(registerData: RegisterStaffDto): Promise<{ message: string }> {
     const { email, password, firstName, lastName, username, role, bio, department, position, phone, address, emergencyContact } = registerData;
 
+    // Check if trying to register as ADMIN and one already exists
+    if (role === 'ADMIN') {
+      const existingAdmin = await prisma.staff.findFirst({
+        where: { role: 'ADMIN' }
+      });
+      
+      if (existingAdmin) {
+        throw { statusCode: 400, message: "There can only be one admin. Please contact the existing admin or choose a different role." };
+      }
+    }
+
     // Check if email exists
     const [existingUser, existingStaff] = await Promise.all([
       prisma.user.findUnique({ where: { email } }),
