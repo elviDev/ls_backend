@@ -16,9 +16,17 @@ const upload = multer({
   },
 });
 
+// More flexible upload middleware that accepts any field name
+const flexibleUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB limit
+  },
+}).any(); // Accept any field name
+
 router.get("/", authMiddleware, requireStaff, (req, res) => assetController.getAssets(req, res));
 router.post("/", authMiddleware, requireStaff, upload.fields([{ name: 'file', maxCount: 1 }]), (req, res) => assetController.createAsset(req, res));
-router.post("/upload", authMiddleware, requireStaff, upload.array('files'), (req, res) => assetController.uploadMultiple(req, res));
+router.post("/upload", authMiddleware, requireStaff, flexibleUpload, (req, res) => assetController.uploadFlexible(req, res));
 router.post("/upload-multiple", authMiddleware, requireStaff, upload.array('files'), (req, res) => assetController.uploadMultiple(req, res));
 router.get("/:id", authMiddleware, requireStaff, (req, res) => assetController.getAssetById(req, res));
 router.put("/:id", authMiddleware, requireStaff, (req, res) => assetController.updateAsset(req, res));

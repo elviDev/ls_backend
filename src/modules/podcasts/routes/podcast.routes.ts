@@ -37,10 +37,12 @@ router.post("/:id/favorite", authMiddleware, requireAuth, (req, res) => podcastC
 
 // Staff routes (protected)
 router.post("/", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.createPodcast(req, res));
-router.put("/:id", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.updatePodcast(req, res));
+router.patch("/:id", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.updatePodcast(req, res));
 router.delete("/:id", authMiddleware, requireStaff, (req, res) => podcastController.deletePodcast(req, res));
 router.post("/:id/episodes", authMiddleware, requireStaff, upload.fields([{ name: 'audioFile', maxCount: 1 }, { name: 'transcriptFile', maxCount: 1 }]), (req, res) => podcastController.createEpisode(req, res));
-router.put("/episodes/:episodeId", authMiddleware, requireStaff, (req, res) => podcastController.updateEpisode(req, res));
+router.patch("/:id/episodes/:episodeId", authMiddleware, requireStaff, upload.fields([{ name: 'audioFile', maxCount: 1 }, { name: 'transcriptFile', maxCount: 1 }]), (req, res) => podcastController.updateEpisode(req, res));
+router.delete("/:id/episodes/:episodeId", authMiddleware, requireStaff, (req, res) => podcastController.deleteEpisode(req, res));
+router.patch("/episodes/:episodeId", authMiddleware, requireStaff, (req, res) => podcastController.updateEpisode(req, res));
 router.delete("/episodes/:episodeId", authMiddleware, requireStaff, (req, res) => podcastController.deleteEpisode(req, res));
 
 export default router;

@@ -8,12 +8,6 @@ export class AssetController {
 
   async createAsset(req: Request, res: Response): Promise<void> {
     try {
-      console.log("File upload request:", {
-        files: req.files,
-        body: req.body,
-        headers: req.headers["content-type"],
-      });
-
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       const file = files?.file?.[0];
 
@@ -86,6 +80,38 @@ export class AssetController {
       res.json(result);
     } catch (error: any) {
       logger.error("Delete asset error", { error: error.message });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async uploadFlexible(req: Request, res: Response): Promise<void> {
+    try {
+      const files = req.files as Express.Multer.File[];
+      
+      if (!files || files.length === 0) {
+        res.status(400).json({ error: "No files uploaded" });
+        return;
+      }
+
+      const userId = req.user!.id;
+      
+      // Handle single file upload
+      if (files.length === 1) {
+        const file = files[0];
+        const { type, description, tags } = req.body;
+        const asset = await this.assetService.createAsset(file, userId, {
+          type,
+          description,
+          tags,
+        });
+        res.json(asset);
+      } else {
+        // Handle multiple files
+        const result = await this.assetService.uploadMultipleFiles(files, userId);
+        res.json(result);
+      }
+    } catch (error: any) {
+      logger.error("Flexible asset upload error", { error: error.message });
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   }

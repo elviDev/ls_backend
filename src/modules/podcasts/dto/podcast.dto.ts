@@ -4,6 +4,7 @@ export interface PodcastDto {
   description: string;
   category?: string;
   image?: string;
+  coverImage?: string;
   host: string;
   genreId: string;
   releaseDate: string;

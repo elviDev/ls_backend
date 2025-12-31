@@ -3,12 +3,15 @@ import { prisma } from "../../../lib/prisma";
 import { PodcastService } from "../services/podcast.service";
 import { CommentService } from "../../comments/services/comment.service";
 import { ReviewService } from "../../reviews/services/review.service";
+import { AssetService } from "../../assets/services/asset.service";
 import { PodcastDto, PodcastEpisodeDto, PodcastQueryDto } from "../dto/podcast.dto";
 import { CommentDto } from "../../comments/dto/comment.dto";
 import { ReviewDto } from "../../reviews/dto/review.dto";
 import logger from "../../../utils/logger";
 
 export class PodcastController {
+  private assetService = new AssetService();
+  
   constructor(
     private podcastService: PodcastService,
     private commentService: CommentService,
@@ -49,9 +52,9 @@ export class PodcastController {
 
   async createPodcast(req: Request, res: Response): Promise<void> {
     try {
-      let imageUrl = req.body.image || '';
+      let imageUrl = '';
       
-      // Handle asset reference for image
+      // Handle asset reference for image (from asset repository)
       if (req.body.imageAssetId) {
         const asset = await prisma.asset.findUnique({
           where: { id: req.body.imageAssetId },
@@ -61,6 +64,25 @@ export class PodcastController {
           imageUrl = asset.url;
         }
       }
+      // Handle new file upload - create asset through AssetService
+      else if ((req.files as any)?.coverImage?.[0]) {
+        const file = (req.files as any).coverImage[0];
+        const asset = await this.assetService.createAsset(
+          file, 
+          req.user!.id, 
+          {
+            type: 'IMAGE',
+            description: `Podcast cover image for ${req.body.title}`,
+            tags: 'podcast,cover,image'
+          }
+        );
+        
+        imageUrl = asset.url;
+      }
+      // Handle direct image URL (if provided)
+      else if (req.body.image) {
+        imageUrl = req.body.image;
+      }
       
       // Extract data from FormData
       const podcastData: PodcastDto = {
@@ -69,11 +91,13 @@ export class PodcastController {
         description: req.body.description,
         category: req.body.category,
         image: imageUrl,
+        coverImage: imageUrl, // Set both image and coverImage
         host: req.body.host || req.body.hostId,
         genreId: req.body.genreId,
         releaseDate: req.body.releaseDate,
         tags: req.body.tags
       };
+      
       const authorId = req.user!.id;
       
       const podcast = await this.podcastService.createPodcast(podcastData, authorId);
@@ -90,23 +114,16 @@ export class PodcastController {
       const { id } = req.params;
       const userId = req.user!.id;
       
-      console.log('Update podcast request body:', req.body);
-      console.log('Request files:', req.files);
-      
       let imageUrl = req.body.image || '';
       
       // Handle asset reference for image
       if (req.body.imageAssetId) {
-        console.log('Looking up asset with ID:', req.body.imageAssetId);
         const asset = await prisma.asset.findUnique({
           where: { id: req.body.imageAssetId },
           select: { url: true }
         });
         if (asset) {
           imageUrl = asset.url;
-          console.log('Found asset URL:', imageUrl);
-        } else {
-          console.log('Asset not found for ID:', req.body.imageAssetId);
         }
       }
       
@@ -115,8 +132,6 @@ export class PodcastController {
         ...req.body,
         image: imageUrl || req.body.image,
       };
-      
-      console.log('Final podcast data to update:', podcastData);
       
       const podcast = await this.podcastService.updatePodcast(id, podcastData, userId);
       res.json(podcast);
@@ -170,8 +185,6 @@ export class PodcastController {
         episodeNumber: parseInt(req.body.episodeNumber) || 1,
       };
       
-      console.log('Episode data received:', episodeData);
-      
       const episode = await this.podcastService.createEpisode(podcastId, episodeData, userId);
       res.status(201).json(episode);
     } catch (error: any) {
@@ -206,7 +219,8 @@ export class PodcastController {
 
   async updateEpisode(req: Request, res: Response): Promise<void> {
     try {
-      const { episodeId } = req.params;
+      // Handle both /:id/episodes/:episodeId and /episodes/:episodeId routes
+      const episodeId = req.params.episodeId || req.params.id;
       const episodeData: Partial<PodcastEpisodeDto> = req.body;
       const userId = req.user!.id;
       
@@ -220,7 +234,8 @@ export class PodcastController {
 
   async deleteEpisode(req: Request, res: Response): Promise<void> {
     try {
-      const { episodeId } = req.params;
+      // Handle both /:id/episodes/:episodeId and /episodes/:episodeId routes
+      const episodeId = req.params.episodeId || req.params.id;
       const userId = req.user!.id;
       
       const result = await this.podcastService.deleteEpisode(episodeId, userId);

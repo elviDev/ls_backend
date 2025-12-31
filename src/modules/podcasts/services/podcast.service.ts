@@ -297,13 +297,40 @@ export class PodcastService {
       ? new Date(podcastData.releaseDate).toISOString()
       : new Date().toISOString();
 
+    // Extract relation fields and prepare data
+    const { genreId, host, coverImage, ...restData } = podcastData;
+
+    const createData: any = {
+      ...restData,
+      releaseDate: releaseDateTime,
+      author: {
+        connect: { id: authorId },
+      },
+      status: "DRAFT",
+    };
+
+    // Set both coverImage and image to the same value
+    if (coverImage) {
+      createData.coverImage = coverImage;
+      createData.image = coverImage;
+    }
+
+    // Connect genre if provided
+    if (genreId) {
+      createData.genre = {
+        connect: { id: genreId },
+      };
+    }
+
+    // Connect host if provided
+    if (host) {
+      createData.host = {
+        connect: { id: host },
+      };
+    }
+
     const podcast = await prisma.podcast.create({
-      data: {
-        ...podcastData,
-        releaseDate: releaseDateTime,
-        authorId,
-        status: "DRAFT",
-      } as any,
+      data: createData,
       include: {
         author: {
           select: {
@@ -351,17 +378,60 @@ export class PodcastService {
       };
     }
 
+    // Prepare update data - only include fields that are provided and valid
+    const updateData: any = {};
+
+    // Define valid fields that exist in the Prisma schema
+    const validFields = [
+      "title",
+      "slug",
+      "description",
+      "category",
+      "image",
+      "coverImage",
+      "audioFile",
+      "duration",
+      "releaseDate",
+      "tags",
+      "status",
+    ];
+
+    // Only update fields that are provided and valid
+    Object.keys(podcastData).forEach((key) => {
+      const value = (podcastData as any)[key];
+      if (value !== undefined && value !== null && validFields.includes(key)) {
+        updateData[key] = value;
+      }
+    });
+
     // Convert releaseDate string to ISO-8601 DateTime if provided
-    const updateData = { ...podcastData };
     if (updateData.releaseDate) {
       updateData.releaseDate = new Date(updateData.releaseDate).toISOString();
     }
 
-    console.log("Service updating podcast with data:", updateData);
+    // Convert status to uppercase if provided
+    if (updateData.status) {
+      updateData.status = updateData.status.toUpperCase();
+    }
+
+    // Set both coverImage and image to the same value if coverImage is provided
+    if (updateData.coverImage) {
+      updateData.image = updateData.coverImage;
+    }
+
+    // Handle relation fields that need to be connected
+    if ((podcastData as any).genreId) {
+      updateData.genre = { connect: { id: (podcastData as any).genreId } };
+    }
+
+    if ((podcastData as any).host || (podcastData as any).hostId) {
+      const hostId = (podcastData as any).host || (podcastData as any).hostId;
+      updateData.host = { connect: { id: hostId } };
+    }
 
     const updatedPodcast = await prisma.podcast.update({
       where: { id },
-      data: updateData as any,
+      data: updateData,
       include: {
         author: {
           select: {
@@ -384,7 +454,6 @@ export class PodcastService {
       },
     });
 
-    console.log("Updated podcast result:", updatedPodcast);
     logDatabase("update", "podcast", id);
 
     // Add hostId field for consistency
@@ -560,9 +629,36 @@ export class PodcastService {
       };
     }
 
+    // Prepare update data - only include valid fields
+    const updateData: any = {};
+    
+    // Define valid fields that exist in the Prisma schema
+    const validFields = [
+      'title', 'description', 'episodeNumber', 'audioFile', 'duration', 
+      'status', 'transcript', 'transcriptFile', 'publishedAt'
+    ];
+    
+    // Only update fields that are provided and valid
+    Object.keys(episodeData).forEach(key => {
+      const value = (episodeData as any)[key];
+      if (value !== undefined && value !== null && validFields.includes(key)) {
+        updateData[key] = value;
+      }
+    });
+
+    // Convert status to uppercase if provided
+    if (updateData.status) {
+      updateData.status = updateData.status.toUpperCase();
+    }
+
+    // Set publishedAt when status changes to PUBLISHED
+    if (updateData.status === 'PUBLISHED' && !episode.publishedAt) {
+      updateData.publishedAt = new Date();
+    }
+
     const updatedEpisode = await prisma.podcastEpisode.update({
       where: { id: episodeId },
-      data: episodeData,
+      data: updateData,
     });
     logDatabase("update", "podcastEpisode", episodeId);
 
