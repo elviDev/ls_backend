@@ -32,4 +32,5 @@ export interface AudiobookQueryDto {
   genreId?: string;
   author?: string;
   language?: string;
+  status?: string;
 }

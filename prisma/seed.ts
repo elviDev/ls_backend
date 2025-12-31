@@ -1,10 +1,9 @@
 import { PrismaClient } from '@prisma/client';
-import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
 async function main() {
-  // Create genres first
+  // Create genres
   const genres = [
     { name: 'Technology', slug: 'technology', description: 'Technology and innovation content' },
     { name: 'Music', slug: 'music', description: 'Music shows and entertainment' },
@@ -27,27 +26,8 @@ async function main() {
     });
   }
 
-  // Create a test staff member
-  const hashedPassword = await bcrypt.hash('password123', 12);
-  const staff = await prisma.staff.upsert({
-    where: { email: 'admin@test.com' },
-    update: {},
-    create: {
-      email: 'admin@test.com',
-      password: hashedPassword,
-      firstName: 'Admin',
-      lastName: 'User',
-      username: 'admin',
-      role: 'ADMIN',
-      isActive: true,
-      isApproved: true,
-      emailVerified: true,
-    },
-  });
-
   console.log('Seed data created:', { 
-    genres: genres.length, 
-    staff: staff.id 
+    genres: genres.length
   });
 }
 

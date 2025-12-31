@@ -79,7 +79,8 @@ model Staff {
   organizedEvents           Event[]              @relation("EventOrganizer")
   hostedBroadcasts          LiveBroadcast[]
   passwordResetTokens       PasswordResetToken[]
-  podcasts                  Podcast[]
+  podcasts                  Podcast[]            @relation("PodcastAuthor")
+  hostedPodcasts            Podcast[]            @relation("PodcastHost")
   programs                  Program[]
   assignedSchedules         Schedule[]           @relation("ScheduleAssignee")
   createdSchedules          Schedule[]           @relation("ScheduleCreator")
@@ -209,7 +210,7 @@ model Podcast {
   id               String             @id @default(cuid())
   title            String
   slug             String             @unique
-  host             String
+  hostId           String
   guests           String?
   description      String
   category         String?
@@ -232,7 +233,8 @@ model Podcast {
   mediaHistories   MediaHistory[]
   playbackProgress PlaybackProgress[]
   playlistItems    PlaylistItem[]
-  author           Staff              @relation(fields: [authorId], references: [id])
+  author           Staff              @relation("PodcastAuthor", fields: [authorId], references: [id])
+  host             Staff              @relation("PodcastHost", fields: [hostId], references: [id])
   genre            Genre              @relation(fields: [genreId], references: [id])
   podcastGuests    PodcastGuest[]
   reviews          Review[]

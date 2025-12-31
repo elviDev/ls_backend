@@ -24,9 +24,11 @@ const upload = multer({
 router.get("/", (req, res) => podcastController.getPodcasts(req, res));
 router.get("/:id", (req, res) => podcastController.getPodcastById(req, res));
 router.get("/:id/episodes", (req, res) => podcastController.getEpisodes(req, res));
+router.get("/:id/episodes/:episodeId", (req, res) => podcastController.getEpisodeById(req, res));
 router.get("/episodes/:episodeId", (req, res) => podcastController.getEpisodeById(req, res));
 router.get("/:id/comments", (req, res) => podcastController.getComments(req, res));
 router.get("/:id/reviews", (req, res) => podcastController.getReviews(req, res));
+router.get("/:id/episodes/:episodeId/comments", (req, res) => podcastController.getEpisodeComments(req, res));
 
 // User routes (authenticated)
 router.post("/:id/comments", authMiddleware, requireAuth, (req, res) => podcastController.createComment(req, res));
@@ -35,9 +37,9 @@ router.post("/:id/favorite", authMiddleware, requireAuth, (req, res) => podcastC
 
 // Staff routes (protected)
 router.post("/", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.createPodcast(req, res));
-router.put("/:id", authMiddleware, requireStaff, (req, res) => podcastController.updatePodcast(req, res));
+router.put("/:id", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.updatePodcast(req, res));
 router.delete("/:id", authMiddleware, requireStaff, (req, res) => podcastController.deletePodcast(req, res));
-router.post("/:id/episodes", authMiddleware, requireStaff, (req, res) => podcastController.createEpisode(req, res));
+router.post("/:id/episodes", authMiddleware, requireStaff, upload.fields([{ name: 'audioFile', maxCount: 1 }, { name: 'transcriptFile', maxCount: 1 }]), (req, res) => podcastController.createEpisode(req, res));
 router.put("/episodes/:episodeId", authMiddleware, requireStaff, (req, res) => podcastController.updateEpisode(req, res));
 router.delete("/episodes/:episodeId", authMiddleware, requireStaff, (req, res) => podcastController.deleteEpisode(req, res));
 

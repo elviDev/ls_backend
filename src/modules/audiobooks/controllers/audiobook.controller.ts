@@ -27,8 +27,9 @@ export class AudiobookController {
         author: req.query.author as string,
         language: req.query.language as string,
       };
+      const userId = req.user?.id; // Optional user ID for personalization
 
-      const result = await this.audiobookService.getAudiobooks(query);
+      const result = await this.audiobookService.getAudiobooks(query, userId);
       res.json(result);
     } catch (error: any) {
       logError(error, {
@@ -42,7 +43,8 @@ export class AudiobookController {
   async getAudiobookById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const audiobook = await this.audiobookService.getAudiobookById(id);
+      const userId = req.user?.id; // Optional user ID for favorite status
+      const audiobook = await this.audiobookService.getAudiobookById(id, userId);
       res.json(audiobook);
     } catch (error: any) {
       logError(error, {
@@ -126,15 +128,41 @@ export class AudiobookController {
   async createChapter(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const chapterData: ChapterDto = req.body;
       const userId = req.user!.id;
+      const audioFile = req.file;
+
+      // Convert FormData string values to proper types
+      const chapterData: ChapterDto = {
+        ...req.body,
+        duration: req.body.duration ? parseInt(req.body.duration) : 0,
+        trackNumber: req.body.trackNumber ? parseInt(req.body.trackNumber) : 1,
+        status: req.body.isDraft ? (req.body.isDraft === 'true' ? 'DRAFT' : 'PUBLISHED') : 'DRAFT',
+      };
+
+      // Remove isDraft from the data since it's not a valid field
+      delete (chapterData as any).isDraft;
 
       const chapter = await this.audiobookService.createChapter(
         id,
         chapterData,
-        userId
+        userId,
+        audioFile
       );
       res.status(201).json(chapter);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async getChapter(req: Request, res: Response): Promise<void> {
+    try {
+      const { id, chapterId } = req.params;
+      const chapter = await this.audiobookService.getChapter(id, chapterId);
+      res.json(chapter);
     } catch (error: any) {
       logError(error, {
         module: "audiobooks",
@@ -209,12 +237,127 @@ export class AudiobookController {
     }
   }
 
+  async getStats(req: Request, res: Response): Promise<void> {
+    try {
+      const stats = await this.audiobookService.getAudiobookStats();
+      res.json(stats);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async updateChapter(req: Request, res: Response): Promise<void> {
+    try {
+      const { id, chapterId } = req.params;
+      const userId = req.user!.id;
+      const audioFile = req.file;
+
+      // Convert FormData string values to proper types
+      const chapterData: Partial<ChapterDto> = {
+        ...req.body,
+        duration: req.body.duration ? parseInt(req.body.duration) : undefined,
+        trackNumber: req.body.trackNumber ? parseInt(req.body.trackNumber) : undefined,
+        status: req.body.isDraft ? (req.body.isDraft === 'true' ? 'DRAFT' : 'PUBLISHED') : undefined,
+      };
+
+      // Remove isDraft from the data since it's not a valid field
+      delete (chapterData as any).isDraft;
+
+      const chapter = await this.audiobookService.updateChapter(
+        id,
+        chapterId,
+        chapterData,
+        userId,
+        audioFile
+      );
+      res.json(chapter);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async deleteChapter(req: Request, res: Response): Promise<void> {
+    try {
+      const { id, chapterId } = req.params;
+      const userId = req.user!.id;
+
+      const result = await this.audiobookService.deleteChapter(
+        id,
+        chapterId,
+        userId
+      );
+      res.json(result);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
   async toggleFavorite(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
       const userId = req.user!.id;
 
       const result = await this.audiobookService.toggleFavorite(id, userId);
+      res.json(result);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async saveProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const { position, chapterId } = req.body;
+      const userId = req.user!.id;
+
+      const result = await this.audiobookService.saveProgress(id, userId, position, chapterId);
+      res.json(result);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async getProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.id;
+
+      const result = await this.audiobookService.getProgress(id, userId);
+      res.json(result);
+    } catch (error: any) {
+      logError(error, {
+        module: "audiobooks",
+        action: req.method + " " + req.originalUrl,
+      });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async toggleBookmark(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const userId = req.user!.id;
+
+      const result = await this.audiobookService.toggleBookmark(id, userId);
       res.json(result);
     } catch (error: any) {
       logError(error, {

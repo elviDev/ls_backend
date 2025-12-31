@@ -24,4 +24,6 @@ export interface PodcastQueryDto {
   limit?: number;
   category?: string;
   genreId?: string;
+  dashboard?: boolean;
+  status?: string;
 }

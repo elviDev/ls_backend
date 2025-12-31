@@ -1,4 +1,5 @@
 import { Request, Response } from "express";
+import { prisma } from "../../../lib/prisma";
 import { PodcastService } from "../services/podcast.service";
 import { CommentService } from "../../comments/services/comment.service";
 import { ReviewService } from "../../reviews/services/review.service";
@@ -21,9 +22,12 @@ export class PodcastController {
         limit: parseInt(req.query.limit as string) || 10,
         category: req.query.category as string,
         genreId: req.query.genreId as string,
+        dashboard: req.query.dashboard === "true",
+        status: req.query.status as string,
       };
+      const userId = req.user?.id; // Optional user ID for personalization
 
-      const result = await this.podcastService.getPodcasts(query);
+      const result = await this.podcastService.getPodcasts(query, userId);
       res.json(result);
     } catch (error: any) {
       logger.error("Get podcasts error", { error: error.message });
@@ -34,7 +38,8 @@ export class PodcastController {
   async getPodcastById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const podcast = await this.podcastService.getPodcastById(id);
+      const userId = req.user?.id; // Optional user ID for favorite status
+      const podcast = await this.podcastService.getPodcastById(id, userId);
       res.json(podcast);
     } catch (error: any) {
       logger.error("Get podcast by ID error", { error: error.message });
@@ -44,13 +49,26 @@ export class PodcastController {
 
   async createPodcast(req: Request, res: Response): Promise<void> {
     try {
+      let imageUrl = req.body.image || '';
+      
+      // Handle asset reference for image
+      if (req.body.imageAssetId) {
+        const asset = await prisma.asset.findUnique({
+          where: { id: req.body.imageAssetId },
+          select: { url: true }
+        });
+        if (asset) {
+          imageUrl = asset.url;
+        }
+      }
+      
       // Extract data from FormData
       const podcastData: PodcastDto = {
         title: req.body.title,
         slug: req.body.slug || req.body.title?.toLowerCase().replace(/\s+/g, '-'),
         description: req.body.description,
         category: req.body.category,
-        image: req.body.image,
+        image: imageUrl,
         host: req.body.host || req.body.hostId,
         genreId: req.body.genreId,
         releaseDate: req.body.releaseDate,
@@ -70,8 +88,35 @@ export class PodcastController {
   async updatePodcast(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
-      const podcastData: Partial<PodcastDto> = req.body;
       const userId = req.user!.id;
+      
+      console.log('Update podcast request body:', req.body);
+      console.log('Request files:', req.files);
+      
+      let imageUrl = req.body.image || '';
+      
+      // Handle asset reference for image
+      if (req.body.imageAssetId) {
+        console.log('Looking up asset with ID:', req.body.imageAssetId);
+        const asset = await prisma.asset.findUnique({
+          where: { id: req.body.imageAssetId },
+          select: { url: true }
+        });
+        if (asset) {
+          imageUrl = asset.url;
+          console.log('Found asset URL:', imageUrl);
+        } else {
+          console.log('Asset not found for ID:', req.body.imageAssetId);
+        }
+      }
+      
+      // Extract data from FormData
+      const podcastData: Partial<PodcastDto> = {
+        ...req.body,
+        image: imageUrl || req.body.image,
+      };
+      
+      console.log('Final podcast data to update:', podcastData);
       
       const podcast = await this.podcastService.updatePodcast(id, podcastData, userId);
       res.json(podcast);
@@ -97,8 +142,35 @@ export class PodcastController {
   async createEpisode(req: Request, res: Response): Promise<void> {
     try {
       const { id: podcastId } = req.params;
-      const episodeData: PodcastEpisodeDto = req.body;
       const userId = req.user!.id;
+      
+      let audioUrl = '';
+      
+      // Handle asset reference vs file upload
+      if (req.body.audioAssetId) {
+        // If using an asset from the library, fetch the asset URL
+        const asset = await prisma.asset.findUnique({
+          where: { id: req.body.audioAssetId },
+          select: { url: true }
+        });
+        if (asset) {
+          audioUrl = asset.url;
+        }
+      } else if ((req.files as any)?.audioFile?.[0]?.buffer) {
+        // If uploading a new file, set placeholder for now
+        audioUrl = 'uploaded';
+      }
+      
+      // Extract data from FormData
+      const episodeData: PodcastEpisodeDto = {
+        title: req.body.title,
+        description: req.body.description || '',
+        audioUrl,
+        duration: parseInt(req.body.duration) || 0,
+        episodeNumber: parseInt(req.body.episodeNumber) || 1,
+      };
+      
+      console.log('Episode data received:', episodeData);
       
       const episode = await this.podcastService.createEpisode(podcastId, episodeData, userId);
       res.status(201).json(episode);
@@ -111,7 +183,8 @@ export class PodcastController {
   async getEpisodes(req: Request, res: Response): Promise<void> {
     try {
       const { id: podcastId } = req.params;
-      const episodes = await this.podcastService.getEpisodes(podcastId);
+      const userId = req.user?.id; // Optional user ID for favorite status
+      const episodes = await this.podcastService.getEpisodes(podcastId, userId);
       res.json(episodes);
     } catch (error: any) {
       logger.error("Get episodes error", { error: error.message });
@@ -121,7 +194,8 @@ export class PodcastController {
 
   async getEpisodeById(req: Request, res: Response): Promise<void> {
     try {
-      const { episodeId } = req.params;
+      // Handle both /episodes/:episodeId and /:id/episodes/:episodeId routes
+      const episodeId = req.params.episodeId || req.params.id;
       const episode = await this.podcastService.getEpisodeById(episodeId);
       res.json(episode);
     } catch (error: any) {
@@ -165,6 +239,17 @@ export class PodcastController {
       res.json(result);
     } catch (error: any) {
       logger.error("Get comments error", { error: error.message });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async getEpisodeComments(req: Request, res: Response): Promise<void> {
+    try {
+      const { episodeId } = req.params;
+      const result = await this.commentService.getComments('podcastEpisode', episodeId);
+      res.json(result);
+    } catch (error: any) {
+      logger.error("Get episode comments error", { error: error.message });
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   }

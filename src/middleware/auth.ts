@@ -3,7 +3,8 @@ import jwt from "jsonwebtoken";
 import { prisma } from "../lib/prisma";
 import logger from "../utils/logger";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
+const JWT_SECRET =
+  process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export interface AuthUser {
   id: string;
@@ -119,10 +120,20 @@ export function requireStaff(
   res: Response,
   next: NextFunction
 ): void {
+  console.log(req.user);
+
   if (!req.user || req.user.userType !== "staff") {
     res.status(403).json({ error: "Insufficient permissions" });
     return;
   }
+
+  // Admin is considered staff
+  const staffRoles = ["ADMIN", "HOST", "PRODUCER", "MODERATOR"];
+  if (!req.user.role || !staffRoles.includes(req.user.role)) {
+    res.status(403).json({ error: "Insufficient permissions" });
+    return;
+  }
+  console.log("Here!!!!");
   next();
 }
 
