@@ -11,6 +11,7 @@ const staffController = new StaffController(staffService);
 router.get("/", authMiddleware, requireStaff, (req, res) => staffController.getStaff(req, res));
 router.get("/:id", authMiddleware, requireStaff, (req, res) => staffController.getStaffById(req, res));
 router.put("/:id", authMiddleware, requireStaff, (req, res) => staffController.updateStaff(req, res));
+router.patch("/:id", authMiddleware, requireModerator, (req, res) => staffController.updateStaff(req, res));
 
 // Admin routes (moderator+ only)
 router.post("/", authMiddleware, requireModerator, (req, res) => staffController.createStaff(req, res));
