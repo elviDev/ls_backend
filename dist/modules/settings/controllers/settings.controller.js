@@ -12,7 +12,7 @@ class SettingsController {
             res.json(settings);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'settings', action: 'Get settings error' });
+            (0, logger_1.logError)(error, { module: "settings", action: "Get settings error" });
             res.status(500).json({ error: error.message });
         }
     }
@@ -24,7 +24,7 @@ class SettingsController {
             res.json(settings);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'settings', action: 'Update settings error' });
+            (0, logger_1.logError)(error, { module: "settings", action: "Update settings error" });
             res.status(500).json({ error: error.message });
         }
     }
@@ -34,7 +34,10 @@ class SettingsController {
             res.json(settings);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'settings', action: 'Get public settings error' });
+            (0, logger_1.logError)(error, {
+                module: "settings",
+                action: "Get public settings error",
+            });
             res.status(500).json({ error: error.message });
         }
     }
@@ -46,7 +49,10 @@ class SettingsController {
             res.json(settings);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'settings', action: 'Toggle maintenance error' });
+            (0, logger_1.logError)(error, {
+                module: "settings",
+                action: "Toggle maintenance error",
+            });
             res.status(500).json({ error: error.message });
         }
     }

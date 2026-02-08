@@ -24,7 +24,7 @@ class StaffController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'staff', action: 'Get staff error' });
+            (0, logger_1.logError)(error, { module: "staff", action: "Get staff error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -37,7 +37,7 @@ class StaffController {
             res.json(staff);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'staff', action: 'Get staff by ID error' });
+            (0, logger_1.logError)(error, { module: "staff", action: "Get staff by ID error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -49,7 +49,7 @@ class StaffController {
             res.status(201).json(staff);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'staff', action: 'Create staff error' });
+            (0, logger_1.logError)(error, { module: "staff", action: "Create staff error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -63,7 +63,7 @@ class StaffController {
             res.json(staff);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'staff', action: 'Update staff error' });
+            (0, logger_1.logError)(error, { module: "staff", action: "Update staff error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -76,7 +76,7 @@ class StaffController {
             res.json(staff);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'staff', action: 'Approve staff error' });
+            (0, logger_1.logError)(error, { module: "staff", action: "Approve staff error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -88,7 +88,7 @@ class StaffController {
             res.json(staff);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'staff', action: 'Deactivate staff error' });
+            (0, logger_1.logError)(error, { module: "staff", action: "Deactivate staff error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }

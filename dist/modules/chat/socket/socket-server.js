@@ -13,7 +13,11 @@ const chat_service_1 = require("../services/chat.service");
 function createSocketServer(httpServer) {
     const socketOptions = {
         cors: {
-            origin: [environment_1.config.frontendUrl, "http://localhost:3000"],
+            origin: [
+                environment_1.config.frontendUrl,
+                "http://localhost:3000",
+                "https://lsfrontend-production.up.railway.app"
+            ],
             methods: ["GET", "POST"],
             credentials: true,
         },

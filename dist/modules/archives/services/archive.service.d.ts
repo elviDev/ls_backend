@@ -31,11 +31,11 @@ export declare class ArchiveService {
             isExclusive: boolean;
             createdById: string;
             broadcastId: string | null;
-            host: string | null;
             guests: string | null;
-            audioFile: string | null;
             category: string | null;
+            audioFile: string | null;
             metadata: string | null;
+            host: string | null;
             fileSize: number | null;
             downloadUrl: string | null;
             thumbnailImage: string | null;
@@ -96,11 +96,11 @@ export declare class ArchiveService {
         isExclusive: boolean;
         createdById: string;
         broadcastId: string | null;
-        host: string | null;
         guests: string | null;
-        audioFile: string | null;
         category: string | null;
+        audioFile: string | null;
         metadata: string | null;
+        host: string | null;
         fileSize: number | null;
         downloadUrl: string | null;
         thumbnailImage: string | null;
@@ -118,6 +118,12 @@ export declare class ArchiveService {
         curatedById: string | null;
     }>;
     createArchive(archiveData: ArchiveDto, createdById: string): Promise<{
+        createdBy: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -136,11 +142,11 @@ export declare class ArchiveService {
         isExclusive: boolean;
         createdById: string;
         broadcastId: string | null;
-        host: string | null;
         guests: string | null;
-        audioFile: string | null;
         category: string | null;
+        audioFile: string | null;
         metadata: string | null;
+        host: string | null;
         fileSize: number | null;
         downloadUrl: string | null;
         thumbnailImage: string | null;
@@ -176,11 +182,11 @@ export declare class ArchiveService {
         isExclusive: boolean;
         createdById: string;
         broadcastId: string | null;
-        host: string | null;
         guests: string | null;
-        audioFile: string | null;
         category: string | null;
+        audioFile: string | null;
         metadata: string | null;
+        host: string | null;
         fileSize: number | null;
         downloadUrl: string | null;
         thumbnailImage: string | null;

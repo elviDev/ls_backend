@@ -30,5 +30,6 @@ export interface AudiobookQueryDto {
     genreId?: string;
     author?: string;
     language?: string;
+    status?: string;
 }
 //# sourceMappingURL=audiobook.dto.d.ts.map

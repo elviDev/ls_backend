@@ -2,7 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AssetService = void 0;
 const prisma_1 = require("../../../lib/prisma");
-const s3_service_1 = require("../../../services/s3.service");
+const cloudinary_service_1 = require("../../../services/cloudinary.service");
 class AssetService {
     async getAssets(query, userId) {
         const { type, limit = 20, search } = query;
@@ -46,21 +46,20 @@ class AssetService {
         return asset;
     }
     async createAsset(file, uploadedById, metadata) {
-        // Upload file to S3
-        const fileUrl = await s3_service_1.s3Service.uploadFile(file, 'assets');
-        // Ensure URL includes the base URL if it's a relative path
-        const fullUrl = fileUrl.startsWith('http') ? fileUrl : `${process.env.BASE_URL || 'http://localhost:3001'}${fileUrl}`;
+        // Upload file to Cloudinary
+        const fileUrl = await cloudinary_service_1.cloudinaryService.uploadFile(file, 'radio-assets');
         const asset = await prisma_1.prisma.asset.create({
             data: {
                 originalName: file.originalname,
                 filename: file.originalname,
-                url: fullUrl,
+                url: fileUrl,
                 size: file.size,
                 mimeType: file.mimetype,
                 type: (metadata?.type || (file.mimetype.startsWith('image/') ? 'IMAGE' :
                     file.mimetype.startsWith('audio/') ? 'AUDIO' :
                         file.mimetype.startsWith('video/') ? 'VIDEO' : 'DOCUMENT')),
                 description: metadata?.description,
+                tags: metadata?.tags,
                 uploadedById
             }
         });
@@ -95,6 +94,14 @@ class AssetService {
         }
         await prisma_1.prisma.asset.delete({ where: { id } });
         return { message: "Asset deleted successfully" };
+    }
+    async uploadMultipleFiles(files, uploadedById) {
+        const results = [];
+        for (const file of files) {
+            const result = await this.createAsset(file, uploadedById);
+            results.push(result);
+        }
+        return { files: results };
     }
 }
 exports.AssetService = AssetService;

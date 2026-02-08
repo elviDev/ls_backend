@@ -12,5 +12,6 @@ router.get("/content", auth_1.authMiddleware, auth_1.requireStaff, (req, res) =>
 router.get("/users", auth_1.authMiddleware, auth_1.requireModerator, (req, res) => analyticsController.getUserAnalytics(req, res));
 router.get("/live", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => analyticsController.getLiveAnalytics(req, res));
 router.get("/dashboard", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => analyticsController.getDashboardStats(req, res));
+router.get("/podcasts", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => analyticsController.getPodcastAnalytics(req, res));
 exports.default = router;
 //# sourceMappingURL=analytics.routes.js.map

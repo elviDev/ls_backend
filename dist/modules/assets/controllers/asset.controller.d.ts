@@ -8,5 +8,7 @@ export declare class AssetController {
     getAssetById(req: Request, res: Response): Promise<void>;
     updateAsset(req: Request, res: Response): Promise<void>;
     deleteAsset(req: Request, res: Response): Promise<void>;
+    uploadFlexible(req: Request, res: Response): Promise<void>;
+    uploadMultiple(req: Request, res: Response): Promise<void>;
 }
 //# sourceMappingURL=asset.controller.d.ts.map

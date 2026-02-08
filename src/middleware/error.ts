@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import logger from "../utils/logger";
+import { Prisma } from "@prisma/client";
 
 export interface AppError extends Error {
   statusCode?: number;
@@ -7,11 +8,58 @@ export interface AppError extends Error {
 }
 
 export const errorHandler = (
-  error: AppError,
+  error: AppError | any,
   req: Request,
   res: Response,
   next: NextFunction
-): void => {
+) => {
+  // Handle Prisma database connection errors
+  if (error instanceof Prisma.PrismaClientInitializationError) {
+    logger.error("Database connection error", {
+      error: error.message,
+      path: req.path,
+      method: req.method,
+    });
+    
+    res.status(503).json({
+      error: "Database service temporarily unavailable. Please try again later.",
+      ...(process.env.NODE_ENV === "development" && { details: error.message }),
+    });
+    return;
+  }
+
+  // Handle Prisma query errors
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    logger.error("Database query error", {
+      code: error.code,
+      meta: error.meta,
+      path: req.path,
+      method: req.method,
+    });
+    
+    res.status(400).json({
+      error: "Database query failed",
+      ...(process.env.NODE_ENV === "development" && { code: error.code, details: error.message }),
+    });
+    return;
+  }
+
+  // Handle validation errors
+  if (error.name === 'ValidationError') {
+    logger.error("Validation error", {
+      error: error.message,
+      path: req.path,
+      method: req.method,
+    });
+    
+    res.status(400).json({
+      error: error.message || "Validation failed",
+      ...(process.env.NODE_ENV === "development" && { stack: error.stack }),
+    });
+    return;
+  }
+
+  // Handle standard application errors
   const statusCode = error.statusCode || 500;
   const message = error.message || "Internal Server Error";
 

@@ -12,8 +12,8 @@ class AnalyticsService {
             prisma_1.prisma.archive.count({ where: { status: "ACTIVE", ...dateFilter } }),
             prisma_1.prisma.podcast.findMany({
                 where: { status: "PUBLISHED" },
-                select: { id: true, title: true, playCount: true },
-                orderBy: { playCount: 'desc' },
+                select: { id: true, title: true, createdAt: true },
+                orderBy: { createdAt: 'desc' },
                 take: 10
             }),
             prisma_1.prisma.audiobook.findMany({
@@ -28,7 +28,7 @@ class AnalyticsService {
             totalAudiobooks,
             totalArchives,
             totalPlays: 0, // Would need to aggregate from playback progress
-            topContent: [...topPodcasts, ...topAudiobooks].sort((a, b) => b.playCount - a.playCount).slice(0, 10)
+            topContent: [...topPodcasts, ...topAudiobooks].slice(0, 10)
         };
     }
     async getUserAnalytics(query) {
@@ -95,6 +95,31 @@ class AnalyticsService {
                 totalBroadcasts
             },
             recentActivity
+        };
+    }
+    async getPodcastAnalytics(query) {
+        const { startDate, endDate } = query;
+        const dateFilter = this.getDateFilter(startDate, endDate);
+        const [totalPodcasts, publishedPodcasts, topPodcasts, podcastsByGenre] = await Promise.all([
+            prisma_1.prisma.podcast.count({ where: dateFilter }),
+            prisma_1.prisma.podcast.count({ where: { status: "PUBLISHED", ...dateFilter } }),
+            prisma_1.prisma.podcast.findMany({
+                where: { status: "PUBLISHED" },
+                select: { id: true, title: true, createdAt: true },
+                orderBy: { createdAt: 'desc' },
+                take: 10
+            }),
+            prisma_1.prisma.podcast.groupBy({
+                by: ['genreId'],
+                _count: { id: true },
+                where: { status: "PUBLISHED" }
+            })
+        ]);
+        return {
+            totalPodcasts,
+            publishedPodcasts,
+            topPodcasts,
+            podcastsByGenre
         };
     }
     async getRecentActivity() {

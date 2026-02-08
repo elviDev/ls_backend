@@ -95,6 +95,23 @@ export class AuthController {
     }
   }
 
+  async verifyEmailByToken(req: Request, res: Response): Promise<void> {
+    try {
+      const { token } = req.params;
+      const result = await this.authService.verifyEmail(token);
+      
+      // Redirect to frontend with success message
+      const redirectUrl = `${process.env.FRONTEND_URL}/login?verified=true`;
+      res.redirect(redirectUrl);
+    } catch (error: any) {
+      logger.error("Verify email error", { error: error?.message || error });
+      
+      // Redirect to frontend with error message
+      const redirectUrl = `${process.env.FRONTEND_URL}/login?verified=false&error=${encodeURIComponent(error?.message || 'Verification failed')}`;
+      res.redirect(redirectUrl);
+    }
+  }
+
   async forgotPassword(req: Request, res: Response): Promise<void> {
     try {
       const { email } = req.body;
@@ -114,6 +131,17 @@ export class AuthController {
     } catch (error: any) {
       logger.error("Reset password error", { error: error?.message || error });
       res.status(error?.statusCode || 500).json({ error: error?.message || "Reset password failed" });
+    }
+  }
+
+  async resendVerification(req: Request, res: Response): Promise<void> {
+    try {
+      const { email } = req.body;
+      const result = await this.authService.resendVerificationEmail(email);
+      res.json(result);
+    } catch (error: any) {
+      logger.error("Resend verification error", { error: error?.message || error });
+      res.status(error?.statusCode || 500).json({ error: error?.message || "Failed to resend verification email" });
     }
   }
 }

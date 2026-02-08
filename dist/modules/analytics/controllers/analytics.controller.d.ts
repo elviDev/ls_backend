@@ -7,5 +7,6 @@ export declare class AnalyticsController {
     getUserAnalytics(req: Request, res: Response): Promise<void>;
     getLiveAnalytics(req: Request, res: Response): Promise<void>;
     getDashboardStats(req: Request, res: Response): Promise<void>;
+    getPodcastAnalytics(req: Request, res: Response): Promise<void>;
 }
 //# sourceMappingURL=analytics.controller.d.ts.map

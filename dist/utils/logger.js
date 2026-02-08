@@ -22,9 +22,10 @@ const logRequest = (method, url, userId) => {
 };
 exports.logRequest = logRequest;
 const logError = (error, context) => {
+    const message = typeof error === 'string' ? error : error?.message || 'Unknown error';
     const contextStr = context ? ` | Context: ${JSON.stringify(context)}` : '';
-    logger.error(`${error.message}${contextStr}`);
-    if (error.stack && process.env.NODE_ENV !== 'production') {
+    logger.error(`${message}${contextStr}`);
+    if (typeof error === 'object' && error?.stack && process.env.NODE_ENV !== 'production') {
         logger.error(error.stack);
     }
 };

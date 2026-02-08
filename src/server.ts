@@ -32,13 +32,14 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Rate limiting with proper trust proxy configuration
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 500, // Increase limit to 500 requests per windowMs
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting validation for trusted proxies
+  // Use X-Forwarded-For header when behind proxy
+  validate: { trustProxy: false }, // Disable validation to prevent crash
   skip: () => false
 });
 app.use(limiter);
@@ -81,6 +82,17 @@ createSocketServer(server);
 
 server.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
+});
+
+// Global error handlers to prevent server crashes
+process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
+  logger.error('Unhandled Rejection at:', { promise, reason: reason?.message || reason });
+  // Don't exit the process in production
+});
+
+process.on('uncaughtException', (error: Error) => {
+  logger.error('Uncaught Exception:', { error: error.message, stack: error.stack });
+  // Don't exit the process in production
 });
 
 export default app;

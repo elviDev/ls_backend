@@ -44,6 +44,7 @@ async function authMiddleware(req, res, next) {
                     profileImage: staff.profileImage,
                     userType: "staff",
                     role: staff.role,
+                    isApproved: staff.isApproved,
                 };
             }
         }
@@ -86,10 +87,18 @@ function requireAuth(req, res, next) {
     next();
 }
 function requireStaff(req, res, next) {
+    console.log(req.user);
     if (!req.user || req.user.userType !== "staff") {
         res.status(403).json({ error: "Insufficient permissions" });
         return;
     }
+    // Admin is considered staff
+    const staffRoles = ["ADMIN", "HOST", "PRODUCER", "MODERATOR"];
+    if (!req.user.role || !staffRoles.includes(req.user.role)) {
+        res.status(403).json({ error: "Insufficient permissions" });
+        return;
+    }
+    console.log("Here!!!!");
     next();
 }
 function requireModerator(req, res, next) {

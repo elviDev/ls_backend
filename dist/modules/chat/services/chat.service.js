@@ -10,6 +10,27 @@ class ChatService {
     constructor() {
         this.connectedUsers = new Map();
     }
+    async normalizeBroadcastId(identifier) {
+        try {
+            // Try to find by ID first, then by slug
+            let broadcast = await prisma_1.prisma.liveBroadcast.findUnique({
+                where: { id: identifier },
+                select: { id: true }
+            });
+            // If not found by ID, try by slug
+            if (!broadcast) {
+                broadcast = await prisma_1.prisma.liveBroadcast.findUnique({
+                    where: { slug: identifier },
+                    select: { id: true }
+                });
+            }
+            return broadcast?.id || null;
+        }
+        catch (error) {
+            console.error('Error normalizing broadcast ID:', error);
+            return null;
+        }
+    }
     async getMessages(broadcastId, limit = 100) {
         const messages = await prisma_1.prisma.chatMessage.findMany({
             where: { broadcastId },
@@ -98,6 +119,7 @@ class ChatService {
             message: updatedMessage,
             likes: newLikes,
             likedBy: newLikedBy,
+            broadcastId: message.broadcastId, // Include for socket broadcasting
         };
     }
     async togglePin(messageId) {
@@ -116,6 +138,7 @@ class ChatService {
         return {
             message: updatedMessage,
             isPinned: updatedMessage.isPinned,
+            broadcastId: message.broadcastId, // Include for socket broadcasting
         };
     }
     // Socket.IO methods
@@ -151,12 +174,16 @@ class ChatService {
             ...result.message,
             likedBy: JSON.parse(result.message.likedBy || "[]"),
         };
-        io.emit("chat-message", messageWithParsedLikes);
-        logger_1.default.info("Message sent via socket", { messageId: result.message.id, userId, username });
+        const roomName = `broadcast-${messageData.broadcastId}`;
+        console.log(`[Chat] Broadcasting message to room: ${roomName}`);
+        console.log(`[Chat] Room members:`, io.sockets.adapter.rooms.get(roomName)?.size || 0);
+        // Broadcast to specific broadcast room instead of all users
+        io.to(roomName).emit("chat-message", messageWithParsedLikes);
+        logger_1.default.info("Message sent via socket", { messageId: result.message.id, userId, username, roomName });
     }
     async toggleLikeViaSocket(io, messageId, userId) {
         const result = await this.toggleLike(messageId, userId);
-        io.emit("message-liked", {
+        io.to(`broadcast-${result.broadcastId}`).emit("message-liked", {
             messageId,
             likes: result.likes,
             likedBy: result.likedBy,
@@ -164,7 +191,7 @@ class ChatService {
     }
     async togglePinViaSocket(io, messageId) {
         const result = await this.togglePin(messageId);
-        io.emit("message-pinned", {
+        io.to(`broadcast-${result.broadcastId}`).emit("message-pinned", {
             messageId,
             isPinned: result.isPinned,
         });

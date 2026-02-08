@@ -7,6 +7,7 @@ export interface AuthUser {
     profileImage?: string | null;
     userType: "user" | "staff";
     role?: string;
+    isApproved?: boolean;
 }
 declare global {
     namespace Express {

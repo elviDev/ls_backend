@@ -6,6 +6,7 @@ export declare class PodcastController {
     private podcastService;
     private commentService;
     private reviewService;
+    private assetService;
     constructor(podcastService: PodcastService, commentService: CommentService, reviewService: ReviewService);
     getPodcasts(req: Request, res: Response): Promise<void>;
     getPodcastById(req: Request, res: Response): Promise<void>;
@@ -18,9 +19,12 @@ export declare class PodcastController {
     updateEpisode(req: Request, res: Response): Promise<void>;
     deleteEpisode(req: Request, res: Response): Promise<void>;
     getComments(req: Request, res: Response): Promise<void>;
+    getEpisodeComments(req: Request, res: Response): Promise<void>;
     createComment(req: Request, res: Response): Promise<void>;
     getReviews(req: Request, res: Response): Promise<void>;
     createReview(req: Request, res: Response): Promise<void>;
     toggleFavorite(req: Request, res: Response): Promise<void>;
+    createEpisodeComment(req: Request, res: Response): Promise<void>;
+    createEpisodeReview(req: Request, res: Response): Promise<void>;
 }
 //# sourceMappingURL=podcast.controller.d.ts.map

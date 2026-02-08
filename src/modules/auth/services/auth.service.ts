@@ -3,10 +3,16 @@ import { LoginDto, RegisterDto, RegisterStaffDto, AuthResponse } from "../dto/au
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import { logAuth, logDatabase, logError } from "../../../utils/logger";
+import { EmailService } from "../../email/services/email.service";
 
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key-change-in-production";
 
 export class AuthService {
+  private emailService: EmailService;
+
+  constructor() {
+    this.emailService = new EmailService();
+  }
   async login(loginData: LoginDto): Promise<AuthResponse> {
     const { email, password } = loginData;
 
@@ -58,7 +64,78 @@ export class AuthService {
     }
 
     if (!user.emailVerified) {
-      throw { statusCode: 403, message: "Please verify your email before logging in" };
+      // Resend verification email for both users and staff
+      try {
+        let token: string;
+        
+        if (isStaff) {
+          // Check if there's an existing token for staff
+          const existingToken = await prisma.verificationToken.findFirst({
+            where: {
+              userId: user.id,
+              type: 'email_verification',
+              expiresAt: { gt: new Date() }
+            }
+          });
+
+          if (existingToken) {
+            token = existingToken.token;
+          } else {
+            // Create new token for staff
+            token = this.generateToken();
+            await prisma.verificationToken.create({
+              data: {
+                token,
+                userId: user.id,
+                type: 'email_verification',
+                expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+              },
+            });
+          }
+          
+          // Resend verification email for staff
+          const staffName = `${staffUser!.firstName} ${staffUser!.lastName}`;
+          await this.emailService.sendVerificationEmail(email, token, staffName);
+        } else {
+          // Check if there's an existing token for regular user
+          const existingToken = await prisma.userVerificationToken.findFirst({
+            where: {
+              userId: user.id,
+              type: 'email_verification',
+              expiresAt: { gt: new Date() }
+            }
+          });
+
+          if (existingToken) {
+            token = existingToken.token;
+          } else {
+            // Create new token for regular user
+            token = this.generateToken();
+            await prisma.userVerificationToken.create({
+              data: {
+                token,
+                userId: user.id,
+                type: 'email_verification',
+                expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+              },
+            });
+          }
+
+          // Resend verification email for user
+          await this.emailService.sendVerificationEmail(email, token, regularUser!.name);
+        }
+        
+        throw { 
+          statusCode: 403, 
+          message: "Please verify your email before logging in. A new verification email has been sent.",
+          emailResent: true
+        };
+      } catch (error: any) {
+        if (error.emailResent) {
+          throw error;
+        }
+        throw { statusCode: 403, message: "Please verify your email before logging in" };
+      }
     }
 
     if (isStaff && !staffUser!.isApproved) {
@@ -160,6 +237,14 @@ export class AuthService {
       },
     });
 
+    // Send verification email
+    try {
+      await this.emailService.sendVerificationEmail(email, token, finalName);
+    } catch (error) {
+      logError('Failed to send verification email', { email, error });
+      // Don't throw error - user is created, just email failed
+    }
+
     return { message: "User account created. Verification email sent." };
   }
 
@@ -220,29 +305,98 @@ export class AuthService {
     logDatabase('create', 'staff', staff.id);
     logAuth('staff_register', staff.id, email);
 
-    return { message: "Staff account created. Pending approval." };
+    // Create verification token for staff
+    const token = this.generateToken();
+    await prisma.verificationToken.create({
+      data: {
+        token,
+        userId: staff.id,
+        type: 'email_verification',
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+      },
+    });
+
+    // Send verification email to staff
+    try {
+      const staffName = `${firstName} ${lastName}`;
+      await this.emailService.sendVerificationEmail(email, token, staffName);
+    } catch (error) {
+      logError('Failed to send staff verification email', { email, error });
+      // Don't throw error - staff is created, just email failed
+    }
+
+    return { message: "Staff account created. Please verify your email and wait for admin approval." };
   }
 
   async verifyEmail(token: string): Promise<{ message: string }> {
-    const verificationToken = await prisma.userVerificationToken.findUnique({
+    // Try to find token in UserVerificationToken first
+    const userVerificationToken = await prisma.userVerificationToken.findUnique({
       where: { token },
       include: { user: true }
     });
 
-    if (!verificationToken || verificationToken.expiresAt < new Date()) {
-      throw { statusCode: 400, message: "Invalid or expired token" };
+    if (userVerificationToken) {
+      if (userVerificationToken.expiresAt < new Date()) {
+        throw { statusCode: 400, message: "Invalid or expired token" };
+      }
+
+      await prisma.user.update({
+        where: { id: userVerificationToken.userId },
+        data: { emailVerified: true }
+      });
+
+      await prisma.userVerificationToken.delete({
+        where: { token }
+      });
+
+      // Send welcome email
+      try {
+        await this.emailService.sendWelcomeEmail(
+          userVerificationToken.user.email,
+          userVerificationToken.user.name
+        );
+      } catch (error) {
+        logError('Failed to send welcome email', { email: userVerificationToken.user.email, error });
+      }
+
+      return { message: "Email verified successfully" };
     }
 
-    await prisma.user.update({
-      where: { id: verificationToken.userId },
-      data: { emailVerified: true }
+    // Try to find token in VerificationToken (for Staff)
+    const staffVerificationToken = await prisma.verificationToken.findUnique({
+      where: { token },
+      include: { user: true }
     });
 
-    await prisma.userVerificationToken.delete({
-      where: { token }
-    });
+    if (staffVerificationToken) {
+      if (staffVerificationToken.expiresAt < new Date()) {
+        throw { statusCode: 400, message: "Invalid or expired token" };
+      }
 
-    return { message: "Email verified successfully" };
+      await prisma.staff.update({
+        where: { id: staffVerificationToken.userId },
+        data: { emailVerified: true }
+      });
+
+      await prisma.verificationToken.delete({
+        where: { token }
+      });
+
+      // Send welcome email for staff
+      try {
+        const staffName = `${staffVerificationToken.user.firstName} ${staffVerificationToken.user.lastName}`;
+        await this.emailService.sendWelcomeEmail(
+          staffVerificationToken.user.email,
+          staffName
+        );
+      } catch (error) {
+        logError('Failed to send welcome email', { email: staffVerificationToken.user.email, error });
+      }
+
+      return { message: "Email verified successfully. Your account is pending admin approval." };
+    }
+
+    throw { statusCode: 400, message: "Invalid or expired token" };
   }
 
   async forgotPassword(email: string): Promise<{ message: string }> {
@@ -260,6 +414,13 @@ export class AuthService {
         expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
       },
     });
+
+    // Send password reset email
+    try {
+      await this.emailService.sendPasswordResetEmail(email, token, user.name);
+    } catch (error) {
+      logError('Failed to send password reset email', { email, error });
+    }
 
     return { message: "Password reset link sent to your email" };
   }
@@ -285,6 +446,88 @@ export class AuthService {
     });
 
     return { message: "Password reset successfully" };
+  }
+
+  async resendVerificationEmail(email: string): Promise<{ message: string }> {
+    // Check if user exists (regular user)
+    const user = await prisma.user.findUnique({ where: { email } });
+    
+    if (user) {
+      if (user.emailVerified) {
+        throw { statusCode: 400, message: "Email is already verified" };
+      }
+
+      // Delete old tokens
+      await prisma.userVerificationToken.deleteMany({
+        where: {
+          userId: user.id,
+          type: 'email_verification'
+        }
+      });
+
+      // Create new token
+      const token = this.generateToken();
+      await prisma.userVerificationToken.create({
+        data: {
+          token,
+          userId: user.id,
+          type: 'email_verification',
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        },
+      });
+
+      // Send verification email
+      try {
+        await this.emailService.sendVerificationEmail(email, token, user.name);
+      } catch (error) {
+        logError('Failed to resend verification email', { email, error });
+        throw { statusCode: 500, message: "Failed to send verification email" };
+      }
+
+      return { message: "Verification email sent successfully" };
+    }
+
+    // Check if staff exists
+    const staff = await prisma.staff.findUnique({ where: { email } });
+    
+    if (staff) {
+      if (staff.emailVerified) {
+        throw { statusCode: 400, message: "Email is already verified" };
+      }
+
+      // Delete old tokens
+      await prisma.verificationToken.deleteMany({
+        where: {
+          userId: staff.id,
+          type: 'email_verification'
+        }
+      });
+
+      // Create new token
+      const token = this.generateToken();
+      await prisma.verificationToken.create({
+        data: {
+          token,
+          userId: staff.id,
+          type: 'email_verification',
+          expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24),
+        },
+      });
+
+      // Send verification email
+      try {
+        const staffName = `${staff.firstName} ${staff.lastName}`;
+        await this.emailService.sendVerificationEmail(email, token, staffName);
+      } catch (error) {
+        logError('Failed to resend verification email', { email, error });
+        throw { statusCode: 500, message: "Failed to send verification email" };
+      }
+
+      return { message: "Verification email sent successfully" };
+    }
+
+    // Don't reveal if user exists or not
+    return { message: "If the email exists and is not verified, a verification email has been sent." };
   }
 
   private generateToken(): string {

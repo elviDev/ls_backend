@@ -284,7 +284,7 @@ export declare class BroadcastService {
         recordingFormat: string;
         streamDelay: number;
     }>;
-    getBroadcastById(id: string): Promise<{
+    getBroadcastById(identifier: string): Promise<{
         staff: ({
             user: {
                 id: string;
@@ -355,10 +355,10 @@ export declare class BroadcastService {
         recordingFormat: string;
         streamDelay: number;
     }>;
-    deleteBroadcast(id: string, userId: string): Promise<{
+    deleteBroadcast(identifier: string, userId: string): Promise<{
         message: string;
     }>;
-    updateBroadcast(id: string, broadcastData: Partial<BroadcastDto>, userId: string): Promise<{
+    updateBroadcast(identifier: string, broadcastData: Partial<BroadcastDto>, userId: string): Promise<{
         staff: ({
             user: {
                 id: string;
@@ -429,7 +429,7 @@ export declare class BroadcastService {
         recordingFormat: string;
         streamDelay: number;
     }>;
-    startBroadcast(id: string, userId: string): Promise<{
+    startBroadcast(identifier: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -457,7 +457,7 @@ export declare class BroadcastService {
         recordingFormat: string;
         streamDelay: number;
     }>;
-    endBroadcast(id: string, userId: string): Promise<{
+    endBroadcast(identifier: string, userId: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;

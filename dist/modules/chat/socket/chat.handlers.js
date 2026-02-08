@@ -10,6 +10,13 @@ function setupChatHandlers(io, socket, chatService) {
     // Register user
     chatService.addUser(socket.id, socketData.userId || "anonymous", socketData.username || "Anonymous");
     chatService.broadcastOnlineCount(io);
+    // Room management
+    socket.on("join-broadcast", (broadcastId) => {
+        handleJoinBroadcast(socket, broadcastId, chatService);
+    });
+    socket.on("leave-broadcast", (broadcastId) => {
+        handleLeaveBroadcast(socket, broadcastId);
+    });
     // Message handlers
     socket.on("send-message", (data) => {
         handleSendMessage(io, socket, data, chatService);
@@ -24,6 +31,41 @@ function setupChatHandlers(io, socket, chatService) {
         handleDisconnect(io, socket, chatService);
     });
 }
+function handleJoinBroadcast(socket, broadcastId, chatService) {
+    try {
+        // Normalize broadcast ID - always use database ID for rooms
+        chatService.normalizeBroadcastId(broadcastId).then(normalizedId => {
+            if (normalizedId) {
+                socket.join(`broadcast-${normalizedId}`);
+                logger_1.default.info(`User joined broadcast room`, { socketId: socket.id, broadcastId, normalizedId });
+                // Send recent messages to the newly joined user
+                chatService.getMessages(normalizedId, 50).then(result => {
+                    socket.emit("chat-history", result.messages);
+                }).catch(error => {
+                    logger_1.default.error("Error loading chat history", { error });
+                });
+            }
+            else {
+                socket.emit("error", { message: "Broadcast not found" });
+            }
+        }).catch(error => {
+            logger_1.default.error("Error normalizing broadcast ID", { error });
+            socket.emit("error", { message: "Failed to join broadcast" });
+        });
+    }
+    catch (error) {
+        logger_1.default.error("Error joining broadcast", { socketId: socket.id, broadcastId, error });
+    }
+}
+function handleLeaveBroadcast(socket, broadcastId) {
+    try {
+        socket.leave(`broadcast-${broadcastId}`);
+        logger_1.default.info(`User left broadcast room`, { socketId: socket.id, broadcastId });
+    }
+    catch (error) {
+        logger_1.default.error("Error leaving broadcast", { socketId: socket.id, broadcastId, error });
+    }
+}
 async function handleSendMessage(io, socket, data, chatService) {
     try {
         const { broadcastId, content, messageType = "user" } = data;
@@ -32,10 +74,15 @@ async function handleSendMessage(io, socket, data, chatService) {
             socket.emit("error", { message: "Invalid message data" });
             return;
         }
+        // Normalize broadcast ID to ensure consistent room targeting
+        const normalizedBroadcastId = await chatService.normalizeBroadcastId(broadcastId);
+        if (!normalizedBroadcastId) {
+            socket.emit("error", { message: "Broadcast not found" });
+            return;
+        }
         await chatService.sendMessageViaSocket(io, {
-            content,
-            messageType,
-            broadcastId,
+            ...data,
+            broadcastId: normalizedBroadcastId
         }, socketData?.userId || "anonymous", socketData?.username || "Anonymous");
     }
     catch (error) {

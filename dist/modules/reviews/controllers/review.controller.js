@@ -15,7 +15,10 @@ class ReviewController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'reviews', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "reviews",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -28,7 +31,10 @@ class ReviewController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'reviews', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "reviews",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }

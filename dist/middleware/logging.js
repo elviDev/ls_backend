@@ -4,19 +4,18 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.errorLogger = exports.requestLogger = void 0;
-const logger_1 = require("../utils/logger");
-const logger_2 = __importDefault(require("../utils/logger"));
+const logger_1 = __importDefault(require("../utils/logger"));
 const requestLogger = (req, res, next) => {
     const userId = req.user?.id;
     const userInfo = userId ? ` [User: ${userId}]` : '';
     const start = Date.now();
-    logger_2.default.info(`🚀 ${req.method} ${req.originalUrl}${userInfo}`);
+    logger_1.default.info(`🚀 ${req.method} ${req.originalUrl}${userInfo}`);
     res.on('finish', () => {
         const duration = Date.now() - start;
         const statusColor = res.statusCode >= 400 ? '🔴' : res.statusCode >= 300 ? '🟡' : '🟢';
-        logger_2.default.info(`${statusColor} ${res.statusCode} ${req.method} ${req.originalUrl} - ${duration}ms`);
+        logger_1.default.info(`${statusColor} ${res.statusCode} ${req.method} ${req.originalUrl} - ${duration}ms`);
         if (res.statusCode >= 400) {
-            (0, logger_1.logError)(new Error(`HTTP ${res.statusCode}`), {
+            logger_1.default.error(`HTTP ${res.statusCode}`, {
                 method: req.method,
                 url: req.originalUrl,
                 duration,
@@ -28,8 +27,8 @@ const requestLogger = (req, res, next) => {
 };
 exports.requestLogger = requestLogger;
 const errorLogger = (error, req, res, next) => {
-    logger_2.default.error(`🚨 ${error.message} | ${req.method} ${req.originalUrl}`);
-    (0, logger_1.logError)(error, {
+    logger_1.default.error(`🚨 ${error.message} | ${req.method} ${req.originalUrl}`);
+    logger_1.default.error(error.message, {
         method: req.method,
         url: req.originalUrl,
         userId: req.user?.id,

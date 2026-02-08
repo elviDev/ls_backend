@@ -14,10 +14,17 @@ export declare class AudiobookController {
     deleteAudiobook(req: Request, res: Response): Promise<void>;
     getChapters(req: Request, res: Response): Promise<void>;
     createChapter(req: Request, res: Response): Promise<void>;
+    getChapter(req: Request, res: Response): Promise<void>;
     getComments(req: Request, res: Response): Promise<void>;
     createComment(req: Request, res: Response): Promise<void>;
     getReviews(req: Request, res: Response): Promise<void>;
     createReview(req: Request, res: Response): Promise<void>;
+    getStats(req: Request, res: Response): Promise<void>;
+    updateChapter(req: Request, res: Response): Promise<void>;
+    deleteChapter(req: Request, res: Response): Promise<void>;
     toggleFavorite(req: Request, res: Response): Promise<void>;
+    saveProgress(req: Request, res: Response): Promise<void>;
+    getProgress(req: Request, res: Response): Promise<void>;
+    toggleBookmark(req: Request, res: Response): Promise<void>;
 }
 //# sourceMappingURL=audiobook.controller.d.ts.map

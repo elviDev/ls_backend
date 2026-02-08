@@ -21,7 +21,10 @@ class ArchiveController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -32,7 +35,10 @@ class ArchiveController {
             res.json(archive);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -44,7 +50,10 @@ class ArchiveController {
             res.status(201).json(archive);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -57,7 +66,10 @@ class ArchiveController {
             res.json(archive);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -69,18 +81,24 @@ class ArchiveController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
     async getComments(req, res) {
         try {
             const { id } = req.params;
-            const result = await this.commentService.getComments('archive', id);
+            const result = await this.commentService.getComments("archive", id);
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -93,18 +111,24 @@ class ArchiveController {
             res.status(201).json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
     async getReviews(req, res) {
         try {
             const { id } = req.params;
-            const result = await this.reviewService.getReviews('archive', id);
+            const result = await this.reviewService.getReviews("archive", id);
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -117,7 +141,10 @@ class ArchiveController {
             res.status(201).json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -129,7 +156,10 @@ class ArchiveController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'archives', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "archives",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }

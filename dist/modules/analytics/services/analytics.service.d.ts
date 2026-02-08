@@ -8,19 +8,7 @@ export declare class AnalyticsService {
         topContent: ({
             id: string;
             createdAt: Date;
-            updatedAt: Date;
-            status: import(".prisma/client").$Enums.PodcastStatus;
-            description: string;
-            tags: string | null;
             title: string;
-            coverImage: string | null;
-            duration: number | null;
-            releaseDate: Date;
-            genreId: string;
-            host: string;
-            guests: string | null;
-            audioFile: string | null;
-            authorId: string;
         } | {
             id: string;
             playCount: number;
@@ -105,6 +93,20 @@ export declare class AnalyticsService {
                 staffId: string | null;
             })[];
         };
+    }>;
+    getPodcastAnalytics(query: AnalyticsQueryDto): Promise<{
+        totalPodcasts: number;
+        publishedPodcasts: number;
+        topPodcasts: {
+            id: string;
+            createdAt: Date;
+            title: string;
+        }[];
+        podcastsByGenre: (import(".prisma/client").Prisma.PickEnumerable<import(".prisma/client").Prisma.PodcastGroupByOutputType, "genreId"[]> & {
+            _count: {
+                id: number;
+            };
+        })[];
     }>;
     private getRecentActivity;
     private getDateFilter;

@@ -14,7 +14,7 @@ class ChatController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'chat', action: 'Get messages error' });
+            (0, logger_1.logError)(error, { module: "chat", action: "Get messages error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -27,7 +27,7 @@ class ChatController {
             res.status(201).json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'chat', action: 'Create message error' });
+            (0, logger_1.logError)(error, { module: "chat", action: "Create message error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -40,7 +40,7 @@ class ChatController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'chat', action: 'Update message error' });
+            (0, logger_1.logError)(error, { module: "chat", action: "Update message error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -53,7 +53,7 @@ class ChatController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'chat', action: 'Delete message error' });
+            (0, logger_1.logError)(error, { module: "chat", action: "Delete message error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -65,7 +65,7 @@ class ChatController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'chat', action: 'Toggle like error' });
+            (0, logger_1.logError)(error, { module: "chat", action: "Toggle like error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -76,7 +76,7 @@ class ChatController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'chat', action: 'Toggle pin error' });
+            (0, logger_1.logError)(error, { module: "chat", action: "Toggle pin error" });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }

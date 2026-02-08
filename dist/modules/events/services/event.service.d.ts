@@ -187,6 +187,42 @@ export declare class EventService {
         sponsors: string | null;
     }>;
     updateEvent(id: string, eventData: Partial<EventDto>, userId: string): Promise<{
+        schedule: {
+            id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            audiobookId: string | null;
+            podcastId: string | null;
+            liveBroadcastId: string | null;
+            status: import(".prisma/client").$Enums.ScheduleStatus;
+            chapterId: string | null;
+            type: import(".prisma/client").$Enums.ScheduleType;
+            description: string | null;
+            tags: string | null;
+            title: string;
+            duration: number | null;
+            publishedAt: Date | null;
+            startTime: Date;
+            endTime: Date | null;
+            timezone: string;
+            isRecurring: boolean;
+            recurringPattern: string | null;
+            recurringEndDate: Date | null;
+            priority: number;
+            metadata: string | null;
+            publishedBy: string | null;
+            autoPublish: boolean;
+            notifyStaff: boolean;
+            notifyUsers: boolean;
+            createdBy: string;
+            assignedTo: string | null;
+        };
+        organizerStaff: {
+            id: string;
+            firstName: string;
+            lastName: string;
+        };
+    } & {
         id: string;
         createdAt: Date;
         updatedAt: Date;

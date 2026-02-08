@@ -1,8 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.broadcastSchema = exports.podcastSchema = exports.registerSchema = exports.loginSchema = exports.validate = void 0;
 const zod_1 = require("zod");
-const logger_1 = require("../utils/logger");
+const logger_1 = __importDefault(require("../utils/logger"));
 const validate = (schema) => {
     return (req, res, next) => {
         try {
@@ -11,10 +14,10 @@ const validate = (schema) => {
         }
         catch (error) {
             if (error instanceof zod_1.z.ZodError) {
-                logger_1.logger.warn("Validation error", { errors: error.errors });
+                logger_1.default.warn("Validation error", { errors: error.issues });
                 res.status(400).json({
                     error: "Validation failed",
-                    details: error.errors
+                    details: error.issues
                 });
                 return;
             }

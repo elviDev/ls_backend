@@ -16,7 +16,10 @@ class AnalyticsController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'analytics', action: 'Get content analytics error' });
+            (0, logger_1.logError)(error, {
+                module: "analytics",
+                action: "Get content analytics error",
+            });
             res.status(500).json({ error: error.message });
         }
     }
@@ -30,7 +33,10 @@ class AnalyticsController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'analytics', action: 'Get user analytics error' });
+            (0, logger_1.logError)(error, {
+                module: "analytics",
+                action: "Get user analytics error",
+            });
             res.status(500).json({ error: error.message });
         }
     }
@@ -44,7 +50,10 @@ class AnalyticsController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'analytics', action: 'Get live analytics error' });
+            (0, logger_1.logError)(error, {
+                module: "analytics",
+                action: "Get live analytics error",
+            });
             res.status(500).json({ error: error.message });
         }
     }
@@ -54,7 +63,27 @@ class AnalyticsController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'analytics', action: 'Get dashboard stats error' });
+            (0, logger_1.logError)(error, {
+                module: "analytics",
+                action: "Get dashboard stats error",
+            });
+            res.status(500).json({ error: error.message });
+        }
+    }
+    async getPodcastAnalytics(req, res) {
+        try {
+            const query = {
+                startDate: req.query.startDate,
+                endDate: req.query.endDate,
+            };
+            const result = await this.analyticsService.getPodcastAnalytics(query);
+            res.json(result);
+        }
+        catch (error) {
+            (0, logger_1.logError)(error, {
+                module: "analytics",
+                action: "Get podcast analytics error",
+            });
             res.status(500).json({ error: error.message });
         }
     }

@@ -2,6 +2,7 @@ import { Server } from "socket.io";
 import { ChatMessageDto } from "../dto/chat.dto";
 export declare class ChatService {
     private connectedUsers;
+    normalizeBroadcastId(identifier: string): Promise<string | null>;
     getMessages(broadcastId: string, limit?: number): Promise<{
         messages: {
             id: string;
@@ -102,6 +103,7 @@ export declare class ChatService {
         };
         likes: number;
         likedBy: string[];
+        broadcastId: string;
     }>;
     togglePin(messageId: string): Promise<{
         message: {
@@ -127,6 +129,7 @@ export declare class ChatService {
             timestamp: Date;
         };
         isPinned: boolean;
+        broadcastId: string;
     }>;
     addUser(socketId: string, userId: string, username: string): void;
     removeUser(socketId: string): void;

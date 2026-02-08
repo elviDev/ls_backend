@@ -18,8 +18,17 @@ const upload = (0, multer_1.default)({
         fileSize: 100 * 1024 * 1024, // 100MB limit
     },
 });
+// More flexible upload middleware that accepts any field name
+const flexibleUpload = (0, multer_1.default)({
+    storage: multer_1.default.memoryStorage(),
+    limits: {
+        fileSize: 100 * 1024 * 1024, // 100MB limit
+    },
+}).any(); // Accept any field name
 router.get("/", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => assetController.getAssets(req, res));
 router.post("/", auth_1.authMiddleware, auth_1.requireStaff, upload.fields([{ name: 'file', maxCount: 1 }]), (req, res) => assetController.createAsset(req, res));
+router.post("/upload", auth_1.authMiddleware, auth_1.requireStaff, flexibleUpload, (req, res) => assetController.uploadFlexible(req, res));
+router.post("/upload-multiple", auth_1.authMiddleware, auth_1.requireStaff, upload.array('files'), (req, res) => assetController.uploadMultiple(req, res));
 router.get("/:id", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => assetController.getAssetById(req, res));
 router.put("/:id", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => assetController.updateAsset(req, res));
 router.delete("/:id", auth_1.authMiddleware, auth_1.requireStaff, (req, res) => assetController.deleteAsset(req, res));

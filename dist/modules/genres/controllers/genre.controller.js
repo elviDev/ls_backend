@@ -12,7 +12,10 @@ class GenreController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'genres', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "genres",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -23,7 +26,10 @@ class GenreController {
             res.json(genre);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'genres', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "genres",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -34,7 +40,10 @@ class GenreController {
             res.status(201).json(genre);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'genres', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "genres",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -46,7 +55,10 @@ class GenreController {
             res.json(genre);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'genres', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "genres",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -57,7 +69,10 @@ class GenreController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'genres', action: req.method + ' ' + req.originalUrl });
+            (0, logger_1.logError)(error, {
+                module: "genres",
+                action: req.method + " " + req.originalUrl,
+            });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }

@@ -1,6 +1,6 @@
 import { PodcastDto, PodcastEpisodeDto, PodcastQueryDto } from "../dto/podcast.dto";
 export declare class PodcastService {
-    getPodcasts(query: PodcastQueryDto): Promise<{
+    getPodcasts(query: PodcastQueryDto, userId?: string): Promise<{
         podcasts: {
             id: any;
             title: any;
@@ -8,20 +8,16 @@ export declare class PodcastService {
             description: any;
             category: any;
             image: any;
+            coverImage: any;
             status: any;
-            host: {
-                name: any;
-                author: {
-                    id: any;
-                    name: string;
-                    profileImage: any;
-                };
-            };
+            author: any;
             genre: any;
-            stats: {
-                episodes: any;
-                favorites: any;
-            };
+            hostId: any;
+            host: any;
+            _count: any;
+            isFavorited: boolean;
+            recentReviews: any;
+            recentComments: any;
             latestEpisode: {
                 id: string;
                 title: string;
@@ -33,7 +29,8 @@ export declare class PodcastService {
         }[];
         count: number;
     }>;
-    getPodcastById(id: string): Promise<{
+    getPodcastById(id: string, userId?: string): Promise<any>;
+    createPodcast(podcastData: PodcastDto, authorId: string): Promise<{
         genre: {
             name: string;
             id: string;
@@ -49,25 +46,13 @@ export declare class PodcastService {
             firstName: string;
             lastName: string;
         };
-        _count: {
-            favorites: number;
-            episodes: number;
-        };
-        episodes: {
+        host: {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            podcastId: string;
-            status: import(".prisma/client").$Enums.EpisodeStatus;
-            description: string | null;
-            title: string;
-            duration: number;
-            publishedAt: Date | null;
-            audioFile: string;
-            transcript: string | null;
-            transcriptFile: string | null;
-            episodeNumber: number;
-        }[];
+            profileImage: string;
+            firstName: string;
+            lastName: string;
+            role: import(".prisma/client").$Enums.StaffRole;
+        };
     } & {
         id: string;
         createdAt: Date;
@@ -76,33 +61,20 @@ export declare class PodcastService {
         description: string;
         tags: string | null;
         title: string;
+        slug: string;
         coverImage: string | null;
         duration: number | null;
         releaseDate: Date;
         genreId: string;
-        host: string;
+        hostId: string;
         guests: string | null;
-        audioFile: string | null;
-        authorId: string;
-    }>;
-    createPodcast(podcastData: PodcastDto, authorId: string): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        status: import(".prisma/client").$Enums.PodcastStatus;
-        description: string;
-        tags: string | null;
-        title: string;
-        coverImage: string | null;
-        duration: number | null;
-        releaseDate: Date;
-        genreId: string;
-        host: string;
-        guests: string | null;
+        category: string | null;
+        image: string | null;
         audioFile: string | null;
         authorId: string;
     }>;
     updatePodcast(id: string, podcastData: Partial<PodcastDto>, userId: string): Promise<{
+        hostId: any;
         genre: {
             name: string;
             id: string;
@@ -118,7 +90,13 @@ export declare class PodcastService {
             firstName: string;
             lastName: string;
         };
-    } & {
+        host: {
+            id: string;
+            profileImage: string;
+            firstName: string;
+            lastName: string;
+            role: import(".prisma/client").$Enums.StaffRole;
+        };
         id: string;
         createdAt: Date;
         updatedAt: Date;
@@ -126,20 +104,41 @@ export declare class PodcastService {
         description: string;
         tags: string | null;
         title: string;
+        slug: string;
         coverImage: string | null;
         duration: number | null;
         releaseDate: Date;
         genreId: string;
-        host: string;
         guests: string | null;
+        category: string | null;
+        image: string | null;
         audioFile: string | null;
         authorId: string;
     }>;
     deletePodcast(id: string, userId: string): Promise<{
         message: string;
     }>;
-    getEpisodes(podcastId: string): Promise<{
+    getEpisodes(podcastId: string, userId?: string): Promise<{
         episodes: {
+            isFavorited: boolean;
+            playbackProgress: {
+                id: string;
+                updatedAt: Date;
+                userId: string | null;
+                audiobookId: string | null;
+                podcastId: string | null;
+                archiveId: string | null;
+                position: number;
+                podcastEpisodeId: string | null;
+                liveBroadcastId: string | null;
+                staffId: string | null;
+                chapterId: string | null;
+            };
+            favorites: any;
+            _count: {
+                favorites: number;
+                comments: number;
+            };
             id: string;
             createdAt: Date;
             updatedAt: Date;

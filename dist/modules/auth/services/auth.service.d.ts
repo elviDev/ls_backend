@@ -1,5 +1,7 @@
 import { LoginDto, RegisterDto, RegisterStaffDto, AuthResponse } from "../dto/auth.dto";
 export declare class AuthService {
+    private emailService;
+    constructor();
     login(loginData: LoginDto): Promise<AuthResponse>;
     register(registerData: RegisterDto): Promise<{
         message: string;
@@ -14,6 +16,9 @@ export declare class AuthService {
         message: string;
     }>;
     resetPassword(token: string, newPassword: string): Promise<{
+        message: string;
+    }>;
+    resendVerificationEmail(email: string): Promise<{
         message: string;
     }>;
     private generateToken;

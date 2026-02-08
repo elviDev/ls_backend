@@ -46,6 +46,7 @@ export declare class AssetService {
     createAsset(file: Express.Multer.File, uploadedById: string, metadata?: {
         type?: string;
         description?: string;
+        tags?: string;
     }): Promise<{
         id: string;
         createdAt: Date;
@@ -76,6 +77,9 @@ export declare class AssetService {
     }>;
     deleteAsset(id: string, userId: string): Promise<{
         message: string;
+    }>;
+    uploadMultipleFiles(files: Express.Multer.File[], uploadedById: string): Promise<{
+        files: any[];
     }>;
 }
 //# sourceMappingURL=asset.service.d.ts.map

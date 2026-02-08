@@ -240,10 +240,11 @@ class BroadcastService {
             throw { statusCode: 500, message: 'Failed to create broadcast' };
         }
     }
-    async getBroadcastById(id) {
+    async getBroadcastById(identifier) {
         try {
-            return await prisma_1.prisma.liveBroadcast.findUnique({
-                where: { id },
+            // Try to find by ID first, then by slug
+            let broadcast = await prisma_1.prisma.liveBroadcast.findUnique({
+                where: { id: identifier },
                 include: {
                     program: {
                         select: {
@@ -281,16 +282,64 @@ class BroadcastService {
                     guests: true
                 }
             });
+            // If not found by ID, try by slug
+            if (!broadcast) {
+                broadcast = await prisma_1.prisma.liveBroadcast.findUnique({
+                    where: { slug: identifier },
+                    include: {
+                        program: {
+                            select: {
+                                id: true,
+                                title: true,
+                                slug: true,
+                                image: true
+                            }
+                        },
+                        hostUser: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                profileImage: true
+                            }
+                        },
+                        banner: {
+                            select: {
+                                id: true,
+                                url: true
+                            }
+                        },
+                        staff: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        firstName: true,
+                                        lastName: true
+                                    }
+                                }
+                            }
+                        },
+                        guests: true
+                    }
+                });
+            }
+            return broadcast;
         }
         catch (error) {
             console.error('Database error in getBroadcastById:', error);
             return null;
         }
     }
-    async deleteBroadcast(id, userId) {
+    async deleteBroadcast(identifier, userId) {
         try {
+            // First find the broadcast by ID or slug
+            const broadcast = await this.getBroadcastById(identifier);
+            if (!broadcast) {
+                throw { statusCode: 404, message: 'Broadcast not found' };
+            }
             await prisma_1.prisma.liveBroadcast.delete({
-                where: { id }
+                where: { id: broadcast.id }
             });
             return { message: 'Broadcast deleted successfully' };
         }
@@ -299,11 +348,16 @@ class BroadcastService {
             throw { statusCode: 500, message: 'Failed to delete broadcast' };
         }
     }
-    async updateBroadcast(id, broadcastData, userId) {
+    async updateBroadcast(identifier, broadcastData, userId) {
         try {
+            // First find the broadcast by ID or slug
+            const broadcast = await this.getBroadcastById(identifier);
+            if (!broadcast) {
+                throw { statusCode: 404, message: 'Broadcast not found' };
+            }
             // Update the broadcast
-            const broadcast = await prisma_1.prisma.liveBroadcast.update({
-                where: { id },
+            const updatedBroadcast = await prisma_1.prisma.liveBroadcast.update({
+                where: { id: broadcast.id },
                 data: {
                     title: broadcastData.title,
                     description: broadcastData.description,
@@ -316,11 +370,11 @@ class BroadcastService {
             });
             // Update staff if provided
             if (broadcastData.staff) {
-                await prisma_1.prisma.broadcastStaff.deleteMany({ where: { broadcastId: id } });
+                await prisma_1.prisma.broadcastStaff.deleteMany({ where: { broadcastId: broadcast.id } });
                 if (broadcastData.staff.length > 0) {
                     await prisma_1.prisma.broadcastStaff.createMany({
                         data: broadcastData.staff.map(staffMember => ({
-                            broadcastId: id,
+                            broadcastId: broadcast.id,
                             userId: staffMember.userId,
                             role: staffMember.role
                         }))
@@ -329,11 +383,11 @@ class BroadcastService {
             }
             // Update guests if provided
             if (broadcastData.guests) {
-                await prisma_1.prisma.broadcastGuest.deleteMany({ where: { broadcastId: id } });
+                await prisma_1.prisma.broadcastGuest.deleteMany({ where: { broadcastId: broadcast.id } });
                 if (broadcastData.guests.length > 0) {
                     await prisma_1.prisma.broadcastGuest.createMany({
                         data: broadcastData.guests.map(guest => ({
-                            broadcastId: id,
+                            broadcastId: broadcast.id,
                             name: guest.name,
                             title: guest.title,
                             role: guest.role
@@ -342,7 +396,7 @@ class BroadcastService {
                 }
             }
             return await prisma_1.prisma.liveBroadcast.findUnique({
-                where: { id },
+                where: { id: broadcast.id },
                 include: {
                     program: { select: { id: true, title: true, slug: true, image: true } },
                     hostUser: { select: { id: true, firstName: true, lastName: true, profileImage: true } },
@@ -357,10 +411,15 @@ class BroadcastService {
             throw { statusCode: 500, message: 'Failed to update broadcast' };
         }
     }
-    async startBroadcast(id, userId) {
+    async startBroadcast(identifier, userId) {
         try {
+            // First find the broadcast by ID or slug
+            const broadcast = await this.getBroadcastById(identifier);
+            if (!broadcast) {
+                throw { statusCode: 404, message: 'Broadcast not found' };
+            }
             return await prisma_1.prisma.liveBroadcast.update({
-                where: { id },
+                where: { id: broadcast.id },
                 data: { status: 'LIVE' }
             });
         }
@@ -369,10 +428,15 @@ class BroadcastService {
             throw { statusCode: 500, message: 'Failed to start broadcast' };
         }
     }
-    async endBroadcast(id, userId) {
+    async endBroadcast(identifier, userId) {
         try {
+            // First find the broadcast by ID or slug
+            const broadcast = await this.getBroadcastById(identifier);
+            if (!broadcast) {
+                throw { statusCode: 404, message: 'Broadcast not found' };
+            }
             return await prisma_1.prisma.liveBroadcast.update({
-                where: { id },
+                where: { id: broadcast.id },
                 data: { status: 'ENDED' }
             });
         }

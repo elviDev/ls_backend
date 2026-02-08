@@ -1,7 +1,10 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
-const logger_1 = require("../../../utils/logger");
+const logger_1 = __importDefault(require("../../../utils/logger"));
 class UsersController {
     constructor(userService) {
         this.userService = userService;
@@ -13,7 +16,7 @@ class UsersController {
             res.json(result);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'users', action: 'Get users error' });
+            logger_1.default.error("Get users error", { error: error.message });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -23,7 +26,8 @@ class UsersController {
             const { isSuspended, suspendedReason } = req.body;
             const requestingUserRole = req.user.role;
             if (requestingUserRole !== 'ADMIN') {
-                return res.status(403).json({ error: "Only administrators can suspend users" });
+                res.status(403).json({ error: "Only administrators can suspend users" });
+                return;
             }
             const user = await this.userService.updateUserStatus(id, {
                 isSuspended,
@@ -33,7 +37,7 @@ class UsersController {
             res.json(user);
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'users', action: 'Suspend user error' });
+            logger_1.default.error("Suspend user error", { error: error.message });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
@@ -42,13 +46,14 @@ class UsersController {
             const { id } = req.params;
             const requestingUserRole = req.user.role;
             if (requestingUserRole !== 'ADMIN') {
-                return res.status(403).json({ error: "Only administrators can delete users" });
+                res.status(403).json({ error: "Only administrators can delete users" });
+                return;
             }
             await this.userService.deleteUser(id);
             res.json({ message: "User deleted successfully" });
         }
         catch (error) {
-            (0, logger_1.logError)(error, { module: 'users', action: 'Delete user error' });
+            logger_1.default.error("Delete user error", { error: error.message });
             res.status(error.statusCode || 500).json({ error: error.message });
         }
     }
