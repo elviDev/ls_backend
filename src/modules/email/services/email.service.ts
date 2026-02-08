@@ -1,38 +1,56 @@
 import nodemailer from 'nodemailer';
 import logger from '../../../utils/logger';
+import axios from 'axios';
 
 export class EmailService {
   private transporter: nodemailer.Transporter;
+  private useApi: boolean;
 
   constructor() {
-    this.transporter = nodemailer.createTransport({
-      host: process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io',
-      port: parseInt(process.env.MAILTRAP_PORT || '2525'),
-      auth: {
-        user: process.env.MAILTRAP_USER,
-        pass: process.env.MAILTRAP_PASS,
-      },
-      // Add timeout and connection settings for production
-      connectionTimeout: 10000, // 10 seconds
-      greetingTimeout: 5000, // 5 seconds
-      socketTimeout: 15000, // 15 seconds
-      pool: true,
-      maxConnections: 5,
-      maxMessages: 100,
-    });
+    // Check if we should use API instead of SMTP (for Railway/production)
+    this.useApi = process.env.USE_MAILTRAP_API === 'true' || process.env.NODE_ENV === 'production';
+
+    if (!this.useApi) {
+      // Use SMTP for local development
+      this.transporter = nodemailer.createTransport({
+        host: process.env.MAILTRAP_HOST || 'sandbox.smtp.mailtrap.io',
+        port: parseInt(process.env.MAILTRAP_PORT || '2525'),
+        auth: {
+          user: process.env.MAILTRAP_USER,
+          pass: process.env.MAILTRAP_PASS,
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 5000,
+        socketTimeout: 15000,
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+      });
+    }
   }
 
   async sendVerificationEmail(email: string, token: string, name: string): Promise<void> {
     const verificationUrl = `${process.env.FRONTEND_URL}/verify-email?token=${token}`;
     
     try {
-      await this.transporter.sendMail({
-        from: process.env.EMAIL_FROM || 'LS Radio <noreply@lsradio.com>',
-        to: email,
-        subject: 'Verify Your Email - LS Radio',
-        html: this.getVerificationEmailTemplate(name, verificationUrl),
-        text: `Hi ${name},\n\nPlease verify your email by clicking this link: ${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nLS Radio Team`,
-      });
+      if (this.useApi) {
+        // Use Mailtrap API for production
+        await this.sendViaApi({
+          to: email,
+          subject: 'Verify Your Email - LS Radio',
+          html: this.getVerificationEmailTemplate(name, verificationUrl),
+          text: `Hi ${name},\n\nPlease verify your email by clicking this link: ${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nLS Radio Team`,
+        });
+      } else {
+        // Use SMTP for local development
+        await this.transporter.sendMail({
+          from: process.env.EMAIL_FROM || 'LS Radio <noreply@lsradio.com>',
+          to: email,
+          subject: 'Verify Your Email - LS Radio',
+          html: this.getVerificationEmailTemplate(name, verificationUrl),
+          text: `Hi ${name},\n\nPlease verify your email by clicking this link: ${verificationUrl}\n\nThis link will expire in 24 hours.\n\nBest regards,\nLS Radio Team`,
+        });
+      }
       
       logger.info(`Verification email sent to ${email}`);
     } catch (error: any) {
@@ -41,6 +59,41 @@ export class EmailService {
         : error.message;
       logger.error('Failed to send verification email', { email, error: errorMessage });
       throw new Error('Failed to send verification email');
+    }
+  }
+
+  private async sendViaApi(emailData: { to: string; subject: string; html: string; text: string }): Promise<void> {
+    const apiToken = process.env.MAILTRAP_API_TOKEN;
+    const inboxId = process.env.MAILTRAP_INBOX_ID;
+
+    if (!apiToken) {
+      throw new Error('MAILTRAP_API_TOKEN is not configured');
+    }
+
+    try {
+      await axios.post(
+        `https://send.api.mailtrap.io/api/send`,
+        {
+          from: {
+            email: process.env.EMAIL_FROM_ADDRESS || 'noreply@lsradio.com',
+            name: 'LS Radio',
+          },
+          to: [{ email: emailData.to }],
+          subject: emailData.subject,
+          html: emailData.html,
+          text: emailData.text,
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${apiToken}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000,
+        }
+      );
+    } catch (error: any) {
+      logger.error('Mailtrap API error', { error: error.response?.data || error.message });
+      throw error;
     }
   }
 
