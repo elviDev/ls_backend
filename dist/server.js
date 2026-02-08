@@ -27,8 +27,10 @@ app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
     origin: [
         process.env.FRONTEND_URL || 'https://lsfrontend-production.up.railway.app',
-        'http://localhost:3000', // Allow localhost for development
-        'https://lsfrontend-production.up.railway.app' // Production frontend
+        'http://localhost:3000',
+        'https://lsfrontend-production.up.railway.app',
+        'https://cbs-radio.com',
+        'https://www.cbs-radio.com'
     ],
     credentials: true
 }));
@@ -56,7 +58,9 @@ app.use('/uploads', (req, res, next) => {
     const allowedOrigins = [
         process.env.FRONTEND_URL || 'https://lsfrontend-production.up.railway.app',
         'http://localhost:3000',
-        'https://lsfrontend-production.up.railway.app'
+        'https://lsfrontend-production.up.railway.app',
+        'https://cbs-radio.com',
+        'https://www.cbs-radio.com'
     ];
     const origin = req.headers.origin;
     if (allowedOrigins.includes(origin)) {

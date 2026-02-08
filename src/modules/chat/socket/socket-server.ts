@@ -12,7 +12,9 @@ export function createSocketServer(httpServer: HttpServer): Server {
       origin: [
         config.frontendUrl, 
         "http://localhost:3000",
-        "https://lsfrontend-production.up.railway.app"
+        "https://lsfrontend-production.up.railway.app",
+        "https://cbs-radio.com",
+        "https://www.cbs-radio.com"
       ],
       methods: ["GET", "POST"],
       credentials: true,
