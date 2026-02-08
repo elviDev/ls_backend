@@ -130,7 +130,7 @@ export function requireStaff(
   }
 
   // Admin is considered staff
-  const staffRoles = ["ADMIN", "HOST", "PRODUCER", "MODERATOR"];
+  const staffRoles = ["ADMIN", "HOST", "CO_HOST", "PRODUCER", "MODERATOR"];
   if (!req.user.role || !staffRoles.includes(req.user.role)) {
     res.status(403).json({ error: "Insufficient permissions" });
     return;
