@@ -12,6 +12,13 @@ export class EmailService {
         user: process.env.MAILTRAP_USER,
         pass: process.env.MAILTRAP_PASS,
       },
+      // Add timeout and connection settings for production
+      connectionTimeout: 10000, // 10 seconds
+      greetingTimeout: 5000, // 5 seconds
+      socketTimeout: 15000, // 15 seconds
+      pool: true,
+      maxConnections: 5,
+      maxMessages: 100,
     });
   }
 
@@ -29,7 +36,10 @@ export class EmailService {
       
       logger.info(`Verification email sent to ${email}`);
     } catch (error: any) {
-      logger.error('Failed to send verification email', { email, error: error.message });
+      const errorMessage = error.code === 'ETIMEDOUT' || error.code === 'ESOCKET' 
+        ? 'Connection timeout' 
+        : error.message;
+      logger.error('Failed to send verification email', { email, error: errorMessage });
       throw new Error('Failed to send verification email');
     }
   }
