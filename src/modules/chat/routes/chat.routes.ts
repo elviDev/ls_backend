@@ -7,6 +7,9 @@ const router = Router();
 const chatService = new ChatService();
 const chatController = new ChatController(chatService);
 
+// Moderator routes (must come before parameterized routes)
+router.post("/kick", authMiddleware, requireModerator, (req, res) => chatController.kickUser(req, res));
+
 // Public routes
 router.get("/:broadcastId", (req, res) => chatController.getMessages(req, res));
 

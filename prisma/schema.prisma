@@ -846,6 +846,7 @@ model ChatUserSession {
   userId      String
   username    String
   userAvatar  String?
+  ipAddress   String?  // Track IP address
   role        String   @default("listener") // listener, host, moderator, admin
   isOnline    Boolean  @default(true)
   isTyping    Boolean  @default(false)
@@ -863,6 +864,7 @@ model ChatUserSession {
   @@index([broadcastId])
   @@index([userId])
   @@index([isOnline])
+  @@index([ipAddress])
 }
 
 model ListenerAnalytics {
@@ -1201,4 +1203,27 @@ model Archive {
   @@index([archivedDate])
   @@index([category])
   @@index([createdById])
+}
+
+
+model ProgramBan {
+  id          String    @id @default(cuid())
+  programId   String
+  ipAddress   String
+  userId      String?   // Optional - if user was logged in
+  username    String?   // Username at time of ban
+  reason      String
+  bannedBy    String    // Staff ID who banned
+  bannedAt    DateTime  @default(now())
+  expiresAt   DateTime? // Optional - for temporary bans
+  isActive    Boolean   @default(true)
+  notes       String?   // Additional notes
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([programId, ipAddress])
+  @@index([programId])
+  @@index([ipAddress])
+  @@index([userId])
+  @@index([isActive])
 }

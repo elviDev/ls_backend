@@ -7,6 +7,8 @@ interface SocketData {
   userId?: string;
   username?: string;
   userType?: string;
+  role?: string;
+  ipAddress?: string;
 }
 
 interface MessageActionData {
@@ -40,6 +42,19 @@ export function setupChatHandlers(io: Server, socket: Socket, chatService: ChatS
 
   socket.on("toggle-pin", (data: MessageActionData) => {
     handleTogglePin(io, socket, data, chatService);
+  });
+
+  // Moderation handlers
+  socket.on("kick-user", (data: { broadcastId: string; targetUserId: string; targetIp?: string; reason?: string }) => {
+    handleKickUser(io, socket, data, chatService);
+  });
+
+  socket.on("ban-user", (data: { broadcastId: string; targetUserId: string; targetIp?: string; reason?: string; duration?: number }) => {
+    handleBanUser(io, socket, data, chatService);
+  });
+
+  socket.on("mute-user", (data: { broadcastId: string; targetUserId: string; targetIp?: string; reason?: string; duration?: number }) => {
+    handleMuteUser(io, socket, data, chatService);
   });
 
   socket.on("disconnect", () => {
@@ -96,6 +111,28 @@ async function handleSendMessage(io: Server, socket: Socket, data: ChatMessageDt
     const normalizedBroadcastId = await chatService.normalizeBroadcastId(broadcastId);
     if (!normalizedBroadcastId) {
       socket.emit("error", { message: "Broadcast not found" });
+      return;
+    }
+
+    // Check if user is banned (check both userId and IP)
+    const isBanned = await chatService.isUserBanned(
+      normalizedBroadcastId, 
+      socketData?.userId || "anonymous",
+      socketData?.ipAddress
+    );
+    if (isBanned) {
+      socket.emit("error", { message: "You are banned from this chat" });
+      return;
+    }
+
+    // Check if user is muted (check both userId and IP)
+    const isMuted = await chatService.isUserMuted(
+      normalizedBroadcastId, 
+      socketData?.userId || "anonymous",
+      socketData?.ipAddress
+    );
+    if (isMuted) {
+      socket.emit("error", { message: "You are muted in this chat" });
       return;
     }
 
@@ -158,5 +195,97 @@ function handleDisconnect(io: Server, socket: Socket, chatService: ChatService):
     chatService.broadcastOnlineCount(io);
   } catch (error) {
     logger.error("Error in disconnect", { socketId: socket.id, error });
+  }
+}
+
+async function handleKickUser(io: Server, socket: Socket, data: { broadcastId: string; targetUserId: string; targetIp?: string; reason?: string }, chatService: ChatService): Promise<void> {
+  try {
+    const socketData = socket.data as SocketData;
+
+    if (socketData?.userType !== 'staff') {
+      socket.emit("error", { message: "Insufficient permissions" });
+      return;
+    }
+
+    await chatService.kickUser(data.broadcastId, data.targetUserId, socketData.userId!, data.reason, data.targetIp);
+
+    // Notify and disconnect the kicked user
+    io.to(`broadcast-${data.broadcastId}`).emit("user-kicked", {
+      userId: data.targetUserId,
+      reason: data.reason,
+    });
+
+    // Find and disconnect sockets with matching userId or IP
+    const sockets = await io.in(`broadcast-${data.broadcastId}`).fetchSockets();
+    for (const s of sockets) {
+      const sData = s.data as SocketData;
+      if (sData.userId === data.targetUserId || (data.targetIp && sData.ipAddress === data.targetIp)) {
+        s.disconnect(true);
+      }
+    }
+
+    logger.info("User kicked", { targetUserId: data.targetUserId, targetIp: data.targetIp, moderatorId: socketData.userId });
+  } catch (error) {
+    logger.error("Error kicking user", { error });
+    socket.emit("error", { message: "Failed to kick user" });
+  }
+}
+
+async function handleBanUser(io: Server, socket: Socket, data: { broadcastId: string; targetUserId: string; targetIp?: string; reason?: string; duration?: number }, chatService: ChatService): Promise<void> {
+  try {
+    const socketData = socket.data as SocketData;
+
+    if (socketData?.userType !== 'staff') {
+      socket.emit("error", { message: "Insufficient permissions" });
+      return;
+    }
+
+    await chatService.banUser(data.broadcastId, data.targetUserId, socketData.userId!, data.reason, data.duration, data.targetIp);
+
+    // Notify and disconnect the banned user
+    io.to(`broadcast-${data.broadcastId}`).emit("user-banned", {
+      userId: data.targetUserId,
+      reason: data.reason,
+      duration: data.duration,
+    });
+
+    // Find and disconnect sockets with matching userId or IP
+    const sockets = await io.in(`broadcast-${data.broadcastId}`).fetchSockets();
+    for (const s of sockets) {
+      const sData = s.data as SocketData;
+      if (sData.userId === data.targetUserId || (data.targetIp && sData.ipAddress === data.targetIp)) {
+        s.disconnect(true);
+      }
+    }
+
+    logger.info("User banned", { targetUserId: data.targetUserId, targetIp: data.targetIp, moderatorId: socketData.userId, duration: data.duration });
+  } catch (error) {
+    logger.error("Error banning user", { error });
+    socket.emit("error", { message: "Failed to ban user" });
+  }
+}
+
+async function handleMuteUser(io: Server, socket: Socket, data: { broadcastId: string; targetUserId: string; targetIp?: string; reason?: string; duration?: number }, chatService: ChatService): Promise<void> {
+  try {
+    const socketData = socket.data as SocketData;
+
+    if (socketData?.userType !== 'staff') {
+      socket.emit("error", { message: "Insufficient permissions" });
+      return;
+    }
+
+    await chatService.muteUser(data.broadcastId, data.targetUserId, socketData.userId!, data.reason, data.duration, data.targetIp);
+
+    // Notify about the mute
+    io.to(`broadcast-${data.broadcastId}`).emit("user-muted", {
+      userId: data.targetUserId,
+      reason: data.reason,
+      duration: data.duration,
+    });
+
+    logger.info("User muted", { targetUserId: data.targetUserId, targetIp: data.targetIp, moderatorId: socketData.userId, duration: data.duration });
+  } catch (error) {
+    logger.error("Error muting user", { error });
+    socket.emit("error", { message: "Failed to mute user" });
   }
 }

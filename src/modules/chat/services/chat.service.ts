@@ -229,4 +229,171 @@ export class ChatService {
       isPinned: result.isPinned,
     });
   }
+
+  // Moderation methods
+  async kickUser(broadcastId: string, targetUserId: string, moderatorId: string, reason?: string, targetIp?: string): Promise<void> {
+    await prisma.chatModerationAction.create({
+      data: {
+        broadcastId,
+        targetUserId,
+        moderatorId,
+        actionType: "kick",
+        reason,
+        isActive: true,
+      },
+    });
+
+    // Update session for both userId and IP
+    if (targetIp) {
+      await prisma.chatUserSession.updateMany({
+        where: { 
+          broadcastId, 
+          OR: [
+            { userId: targetUserId },
+            { ipAddress: targetIp }
+          ]
+        },
+        data: { isOnline: false, leftAt: new Date() },
+      });
+    } else {
+      await prisma.chatUserSession.updateMany({
+        where: { broadcastId, userId: targetUserId },
+        data: { isOnline: false, leftAt: new Date() },
+      });
+    }
+  }
+
+  async banUser(broadcastId: string, targetUserId: string, moderatorId: string, reason?: string, duration?: number, targetIp?: string): Promise<void> {
+    const expiresAt = duration ? new Date(Date.now() + duration * 60000) : undefined;
+
+    await prisma.chatModerationAction.create({
+      data: {
+        broadcastId,
+        targetUserId,
+        moderatorId,
+        actionType: "ban",
+        reason,
+        duration,
+        expiresAt,
+        isActive: true,
+      },
+    });
+
+    // Update session for both userId and IP
+    if (targetIp) {
+      await prisma.chatUserSession.updateMany({
+        where: { 
+          broadcastId, 
+          OR: [
+            { userId: targetUserId },
+            { ipAddress: targetIp }
+          ]
+        },
+        data: { isBanned: true, isOnline: false, leftAt: new Date() },
+      });
+    } else {
+      await prisma.chatUserSession.updateMany({
+        where: { broadcastId, userId: targetUserId },
+        data: { isBanned: true, isOnline: false, leftAt: new Date() },
+      });
+    }
+  }
+
+  async muteUser(broadcastId: string, targetUserId: string, moderatorId: string, reason?: string, duration?: number, targetIp?: string): Promise<void> {
+    const expiresAt = duration ? new Date(Date.now() + duration * 60000) : undefined;
+
+    await prisma.chatModerationAction.create({
+      data: {
+        broadcastId,
+        targetUserId,
+        moderatorId,
+        actionType: "mute",
+        reason,
+        duration,
+        expiresAt,
+        isActive: true,
+      },
+    });
+
+    // Update session for both userId and IP
+    if (targetIp) {
+      await prisma.chatUserSession.updateMany({
+        where: { 
+          broadcastId, 
+          OR: [
+            { userId: targetUserId },
+            { ipAddress: targetIp }
+          ]
+        },
+        data: { isMuted: true },
+      });
+    } else {
+      await prisma.chatUserSession.updateMany({
+        where: { broadcastId, userId: targetUserId },
+        data: { isMuted: true },
+      });
+    }
+  }
+
+  async isUserBanned(broadcastId: string, userId: string, ipAddress?: string): Promise<boolean> {
+    const whereClause: any = {
+      broadcastId,
+      actionType: "ban",
+      isActive: true,
+      OR: [
+        { expiresAt: null },
+        { expiresAt: { gt: new Date() } },
+      ],
+    };
+
+    // Check both userId and IP address
+    if (ipAddress) {
+      const session = await prisma.chatUserSession.findFirst({
+        where: {
+          broadcastId,
+          ipAddress,
+          isBanned: true,
+        },
+      });
+      if (session) return true;
+    }
+
+    const activeBan = await prisma.chatModerationAction.findFirst({
+      where: {
+        ...whereClause,
+        targetUserId: userId,
+      },
+    });
+
+    return !!activeBan;
+  }
+
+  async isUserMuted(broadcastId: string, userId: string, ipAddress?: string): Promise<boolean> {
+    // Check both userId and IP address
+    if (ipAddress) {
+      const session = await prisma.chatUserSession.findFirst({
+        where: {
+          broadcastId,
+          ipAddress,
+          isMuted: true,
+        },
+      });
+      if (session) return true;
+    }
+
+    const activeMute = await prisma.chatModerationAction.findFirst({
+      where: {
+        broadcastId,
+        targetUserId: userId,
+        actionType: "mute",
+        isActive: true,
+        OR: [
+          { expiresAt: null },
+          { expiresAt: { gt: new Date() } },
+        ],
+      },
+    });
+
+    return !!activeMute;
+  }
 }

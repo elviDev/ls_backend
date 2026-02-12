@@ -32,4 +32,32 @@ export class LiveKitController {
       });
     }
   }
+
+  async removeParticipant(req: Request, res: Response) {
+    try {
+      const { roomName, participantIdentity } = req.body;
+
+      if (!roomName || !participantIdentity) {
+        return res.status(400).json({
+          error: 'roomName and participantIdentity are required'
+        });
+      }
+
+      const result = await this.liveKitService.removeParticipant(roomName, participantIdentity);
+
+      res.json({ 
+        success: true, 
+        message: result.notInRoom 
+          ? 'Participant not in LiveKit room' 
+          : 'Participant removed successfully',
+        notInRoom: result.notInRoom
+      });
+    } catch (error: any) {
+      console.error('Error removing participant:', error);
+      res.status(500).json({
+        error: 'Failed to remove participant',
+        message: error.message
+      });
+    }
+  }
 }

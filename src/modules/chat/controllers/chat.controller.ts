@@ -98,4 +98,21 @@ export class ChatController {
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   }
+
+  async kickUser(req: Request, res: Response): Promise<void> {
+    try {
+      const { broadcastId, targetUserId, reason } = req.body;
+      const moderatorId = req.user!.id;
+
+      if (!broadcastId || !targetUserId) {
+        return res.status(400).json({ error: "broadcastId and targetUserId are required" });
+      }
+
+      await this.chatService.kickUser(broadcastId, targetUserId, moderatorId, reason);
+      res.json({ success: true, message: "User kicked successfully" });
+    } catch (error: any) {
+      logError(error, { module: "chat", action: "Kick user error" });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
 }
