@@ -105,7 +105,8 @@ export class ChatController {
       const moderatorId = req.user!.id;
 
       if (!broadcastId || !targetUserId) {
-        return res.status(400).json({ error: "broadcastId and targetUserId are required" });
+        res.status(400).json({ error: "broadcastId and targetUserId are required" });
+        return;
       }
 
       await this.chatService.kickUser(broadcastId, targetUserId, moderatorId, reason);
