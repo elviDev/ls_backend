@@ -397,4 +397,23 @@ export class StaffService {
 
     return staff;
   }
+
+  async deleteStaff(id: string, requestingUserRole: string) {
+    // Only ADMIN can delete staff
+    if (requestingUserRole !== "ADMIN") {
+      throw {
+        statusCode: 403,
+        message: "Only administrators can delete staff members",
+      };
+    }
+
+    const staff = await prisma.staff.findUnique({ where: { id } });
+    if (!staff) {
+      throw { statusCode: 404, message: "Staff member not found" };
+    }
+
+    await prisma.staff.delete({ where: { id } });
+
+    return { message: "Staff member deleted successfully" };
+  }
 }
