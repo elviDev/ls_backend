@@ -17,5 +17,6 @@ router.patch("/:id", authMiddleware, requireModerator, (req, res) => staffContro
 router.post("/", authMiddleware, requireModerator, (req, res) => staffController.createStaff(req, res));
 router.post("/:id/approve", authMiddleware, requireModerator, (req, res) => staffController.approveStaff(req, res));
 router.post("/:id/deactivate", authMiddleware, requireModerator, (req, res) => staffController.deactivateStaff(req, res));
+router.delete("/:id", authMiddleware, requireModerator, (req, res) => staffController.deleteStaff(req, res));
 
 export default router;

@@ -119,4 +119,20 @@ export class StaffController {
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   }
+
+  async deleteStaff(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const requestingUserRole = req.user!.role;
+
+      const result = await this.staffService.deleteStaff(
+        id,
+        requestingUserRole
+      );
+      res.json(result);
+    } catch (error: any) {
+      logError(error, { module: "staff", action: "Delete staff error" });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
 }
