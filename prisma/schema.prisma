@@ -223,8 +223,9 @@ model Podcast {
   updatedAt        DateTime           @updatedAt
   authorId         String
   genreId          String
-  tags             String?
-  status           PodcastStatus      @default(DRAFT)
+  tags                String?
+  youtubePlaylistUrl  String?
+  status              PodcastStatus      @default(DRAFT)
   episodes         PodcastEpisode[]
   bookmarks        Bookmark[]
   comments         Comment[]

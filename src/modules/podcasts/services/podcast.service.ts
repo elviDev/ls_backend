@@ -393,6 +393,7 @@ export class PodcastService {
       "duration",
       "releaseDate",
       "tags",
+      "youtubePlaylistUrl",
       "status",
     ];
 

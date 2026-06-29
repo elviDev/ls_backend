@@ -9,6 +9,7 @@ export interface PodcastDto {
   genreId: string;
   releaseDate: string;
   tags?: string;
+  youtubePlaylistUrl?: string;
 }
 
 export interface PodcastEpisodeDto {
