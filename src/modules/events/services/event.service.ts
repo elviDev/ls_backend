@@ -180,9 +180,24 @@ export class EventService {
       throw { statusCode: 403, message: "Not authorized to update this event" };
     }
 
+    // Split fields: title/description/startTime/endTime/status belong to Schedule
+    const { title, description, startTime, endTime, status, ...eventFields } = eventData as any;
+
+    const scheduleUpdate: any = {};
+    if (title !== undefined) scheduleUpdate.title = title;
+    if (description !== undefined) scheduleUpdate.description = description;
+    if (startTime !== undefined) scheduleUpdate.startTime = startTime;
+    if (endTime !== undefined) scheduleUpdate.endTime = endTime;
+    if (status !== undefined) scheduleUpdate.status = status;
+
     const updatedEvent = await prisma.event.update({
       where: { id },
-      data: eventData as any,
+      data: {
+        ...eventFields,
+        ...(Object.keys(scheduleUpdate).length > 0 && {
+          schedule: { update: scheduleUpdate }
+        })
+      },
       include: {
         schedule: true,
         organizerStaff: {
@@ -195,7 +210,7 @@ export class EventService {
       }
     });
 
-    return updatedEvent;
+    return this.mapEvent(updatedEvent);
   }
 
   async deleteEvent(id: string, userId: string) {
