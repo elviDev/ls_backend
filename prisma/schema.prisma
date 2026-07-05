@@ -256,6 +256,9 @@ model PodcastEpisode {
   status           EpisodeStatus      @default(DRAFT)
   transcript       String?            // Manual transcript
   transcriptFile   String?            // Uploaded transcript file
+  playCount        Int                @default(0)
+  downloadCount    Int                @default(0)
+  shareCount       Int                @default(0)
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
   podcast          Podcast            @relation(fields: [podcastId], references: [id], onDelete: Cascade)

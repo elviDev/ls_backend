@@ -37,6 +37,11 @@ router.post("/:id/favorite", authMiddleware, requireAuth, (req, res) => podcastC
 router.post("/:id/episodes/:episodeId/comments", authMiddleware, requireAuth, (req, res) => podcastController.createEpisodeComment(req, res));
 router.post("/:id/episodes/:episodeId/reviews", authMiddleware, requireAuth, (req, res) => podcastController.createEpisodeReview(req, res));
 
+// Episode stats (public — no auth required to track plays/downloads/shares)
+router.post("/:id/episodes/:episodeId/play", (req, res) => podcastController.trackEpisodePlay(req, res));
+router.post("/:id/episodes/:episodeId/download", (req, res) => podcastController.trackEpisodeDownload(req, res));
+router.post("/:id/episodes/:episodeId/share", (req, res) => podcastController.trackEpisodeShare(req, res));
+
 // Staff routes (protected)
 router.post("/", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.createPodcast(req, res));
 router.patch("/:id", authMiddleware, requireStaff, upload.fields([{ name: 'coverImage', maxCount: 1 }]), (req, res) => podcastController.updatePodcast(req, res));

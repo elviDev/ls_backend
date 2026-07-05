@@ -8,6 +8,7 @@ import { PodcastDto, PodcastEpisodeDto, PodcastQueryDto } from "../dto/podcast.d
 import { CommentDto } from "../../comments/dto/comment.dto";
 import { ReviewDto } from "../../reviews/dto/review.dto";
 import logger from "../../../utils/logger";
+import { cloudinaryService } from "../../../services/cloudinary.service";
 
 export class PodcastController {
   private assetService = new AssetService();
@@ -160,10 +161,9 @@ export class PodcastController {
       const userId = req.user!.id;
       
       let audioUrl = '';
-      
+
       // Handle asset reference vs file upload
       if (req.body.audioAssetId) {
-        // If using an asset from the library, fetch the asset URL
         const asset = await prisma.asset.findUnique({
           where: { id: req.body.audioAssetId },
           select: { url: true }
@@ -171,9 +171,8 @@ export class PodcastController {
         if (asset) {
           audioUrl = asset.url;
         }
-      } else if ((req.files as any)?.audioFile?.[0]?.buffer) {
-        // If uploading a new file, set placeholder for now
-        audioUrl = 'uploaded';
+      } else if ((req.files as any)?.audioFile?.[0]) {
+        audioUrl = await cloudinaryService.uploadFile((req.files as any).audioFile[0], 'podcast-episodes');
       }
       
       // Extract data from FormData
@@ -344,11 +343,41 @@ export class PodcastController {
       const { episodeId } = req.params;
       const reviewData = { ...req.body, podcastEpisodeId: episodeId };
       const userId = req.user!.id;
-      
+
       const result = await this.reviewService.createReview(reviewData, userId);
       res.status(201).json(result);
     } catch (error: any) {
       logger.error("Create episode review error", { error: error.message });
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async trackEpisodePlay(req: Request, res: Response): Promise<void> {
+    try {
+      const { episodeId } = req.params;
+      const result = await this.podcastService.trackEpisodePlay(episodeId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async trackEpisodeDownload(req: Request, res: Response): Promise<void> {
+    try {
+      const { episodeId } = req.params;
+      const result = await this.podcastService.trackEpisodeDownload(episodeId);
+      res.json(result);
+    } catch (error: any) {
+      res.status(error.statusCode || 500).json({ error: error.message });
+    }
+  }
+
+  async trackEpisodeShare(req: Request, res: Response): Promise<void> {
+    try {
+      const { episodeId } = req.params;
+      const result = await this.podcastService.trackEpisodeShare(episodeId);
+      res.json(result);
+    } catch (error: any) {
       res.status(error.statusCode || 500).json({ error: error.message });
     }
   }

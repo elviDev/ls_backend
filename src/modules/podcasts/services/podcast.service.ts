@@ -730,4 +730,34 @@ export class PodcastService {
       return { message: "Added to favorites", isFavorited: true };
     }
   }
+
+  async trackEpisodePlay(episodeId: string) {
+    const episode = await prisma.podcastEpisode.findUnique({ where: { id: episodeId } });
+    if (!episode) throw { statusCode: 404, message: "Episode not found" };
+    await prisma.podcastEpisode.update({
+      where: { id: episodeId },
+      data: { playCount: { increment: 1 } },
+    });
+    return { message: "Play tracked" };
+  }
+
+  async trackEpisodeDownload(episodeId: string) {
+    const episode = await prisma.podcastEpisode.findUnique({ where: { id: episodeId } });
+    if (!episode) throw { statusCode: 404, message: "Episode not found" };
+    await prisma.podcastEpisode.update({
+      where: { id: episodeId },
+      data: { downloadCount: { increment: 1 } },
+    });
+    return { audioFile: episode.audioFile };
+  }
+
+  async trackEpisodeShare(episodeId: string) {
+    const episode = await prisma.podcastEpisode.findUnique({ where: { id: episodeId } });
+    if (!episode) throw { statusCode: 404, message: "Episode not found" };
+    await prisma.podcastEpisode.update({
+      where: { id: episodeId },
+      data: { shareCount: { increment: 1 } },
+    });
+    return { message: "Share tracked" };
+  }
 }

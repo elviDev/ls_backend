@@ -2,6 +2,20 @@ import { prisma } from "../../../lib/prisma";
 import { EventDto, EventQueryDto } from "../dto/event.dto";
 
 export class EventService {
+  private mapEvent(event: any) {
+    return {
+      ...event,
+      title: event.schedule?.title || '',
+      description: event.schedule?.description || '',
+      startTime: event.schedule?.startTime || '',
+      endTime: event.schedule?.endTime ?? null,
+      currentAttendees: event._count?.registrations ?? 0,
+      organizer: event.organizerStaff ?? null,
+      isFeatured: event.isFeatured || false,
+      isRegistered: false,
+    };
+  }
+
   async getEvents(query: EventQueryDto) {
     const { eventType, upcoming, limit = 10, search } = query;
     
@@ -51,7 +65,7 @@ export class EventService {
       take: limit
     });
 
-    return { events, count: events.length };
+    return { events: events.map(e => this.mapEvent(e)), count: events.length };
   }
 
   async getEventById(id: string) {
@@ -98,7 +112,7 @@ export class EventService {
       throw { statusCode: 404, message: "Event not found" };
     }
 
-    return event;
+    return this.mapEvent(event);
   }
 
   async createEvent(eventData: EventDto, organizerId: string) {
