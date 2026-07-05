@@ -9,6 +9,7 @@ export class EventService {
       description: event.schedule?.description || '',
       startTime: event.schedule?.startTime || '',
       endTime: event.schedule?.endTime ?? null,
+      status: event.schedule?.status || 'DRAFT',
       currentAttendees: event._count?.registrations ?? 0,
       organizer: event.organizerStaff ?? null,
       isFeatured: event.isFeatured || false,
